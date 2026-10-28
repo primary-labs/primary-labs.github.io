@@ -164,25 +164,16 @@ main:focus { outline: none; }
 /* ---------- Sections ---------- */
 .section { padding: 88px 0; }
 .section h2 { font-size: var(--t-h2); line-height: 1.2; }
-.section-lede { margin-top: 12px; font-size: var(--t-lede); color: var(--ink-soft); max-width: 32em; }
 
 /* Labs */
-.lab {
-  margin-top: 32px; padding-top: 28px;
-  border-top: 3px solid var(--ink);
-  display: grid; gap: 20px; justify-items: start;
-}
-.lab-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
-.lab h3 { font-size: 1.75rem; line-height: 1.2; }
-.lab-for { color: var(--ink-soft); }
-.lab-desc { font-size: var(--t-lede); max-width: 34em; }
-.lab-parts { display: grid; gap: 16px 40px; width: 100%; max-width: 760px; }
-@media (min-width: 640px) { .lab-parts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.lab-parts div { padding-left: 16px; border-left: 3px solid var(--rule); }
-.lab-parts dt { font-weight: 700; }
-.lab-parts dd { color: var(--ink-soft); }
-.lab-standards { font-size: var(--t-small); color: var(--ink-soft); }
-.lab-next { margin-top: 48px; color: var(--ink-soft); max-width: 36em; }
+.lab-list { list-style: none; padding: 0; margin-top: 32px; border-top: 3px solid var(--ink); }
+.lab-item { position: relative; padding: 20px 0; border-bottom: 1px solid var(--rule); }
+.lab-item h3 { font-size: var(--t-h3); line-height: 1.3; }
+.lab-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+/* Make the whole row clickable. */
+.lab-link::after { content: ""; position: absolute; inset: 0; }
+.lab-meta { margin-top: 4px; font-size: var(--t-small); color: var(--ink-soft); }
+.lab-desc { margin-top: 6px; max-width: 34em; }
 
 /* Teachers */
 .section--teachers { background: var(--wash); border-top: 1px solid var(--rule-soft); }
