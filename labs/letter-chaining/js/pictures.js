@@ -52,7 +52,7 @@
   };
 
   /* Hand-drawn pictures that stand for a word (names in js/art.js). */
-  var HAND = ['cat', 'cot', 'dot', 'dog', 'dig', 'dad', 'can', 'tan', 'tin', 'ton', 'tot', 'nod', 'tag',
+  var HAND = ['cat', 'cot', 'dot', 'dog', 'dig', 'dad', 'can', 'tan', 'tin', 'tot', 'nod', 'tag',
     'gig', 'cod', 'cog', 'top', 'cup', 'log', 'mop', 'rug', 'fan', 'wig', 'jar', 'lid'];
 
   /* Real words with no clear picture. They show as a word card, not a creature. */

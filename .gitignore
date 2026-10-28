@@ -1,7 +1,4 @@
 .claude/
 .DS_Store
-# Placeholder clips made with the macOS "Samantha" voice (personal use only). Never publish.
-# Delete these lines once the clips are replaced with real recordings.
-labs/letter-chaining/assets/audio/words/
-labs/letter-chaining/assets/audio/keywords/
-labs/letter-chaining/assets/audio/sentences/
+__pycache__/
+.venv/

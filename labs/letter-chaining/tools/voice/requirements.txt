@@ -1,0 +1,17 @@
+# Build-time only. Nothing here ships to the browser. Python 3.10-3.12 (Kokoro and misaki do not
+# support 3.13+ yet). Versions are the ones the first pack was made with.
+kokoro==0.9.4
+misaki[en]==0.9.4
+torch==2.14.1
+numpy==2.5.4
+soundfile==0.14.0
+pyloudnorm==0.2.0
+praat-parselmouth==0.4.7
+scipy==1.18.1
+transformers==5.20.2
+huggingface_hub==2.3.0
+spacy==3.8.16
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+# Optional: the phoneme recognizers used by the checks (--zipa, --w2v2)
+onnxruntime==1.31.0
+lhotse==1.33.0

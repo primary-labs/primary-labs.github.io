@@ -1,21 +1,36 @@
 # Audio clips
 
-Every word, keyword picture, and sentence in Letter Chains plays from a file in this folder.
-The page never uses the computer's built-in voice when a file is here, so it sounds the same on
-every computer and browser.
+Every letter sound, word, keyword picture, and sentence in Letter Chains plays from a file in this
+folder. The page never uses the computer's built-in voice when a file is here, so it sounds the same
+on every computer and browser. When a teacher records a letter sound or word in Teacher Corner, their recording plays instead.
 
-**The current files are placeholders** made with the macOS voice "Samantha" by
-`tools/make-placeholder-audio.js`. Apple's license limits that voice to personal, non-commercial use,
-so record these with a real voice before shipping to schools.
+**These files are computer-generated** with the "Heart" voice of Kokoro-82M, an open-source voice
+model, by `tools/voice/generate.py`. Words, keywords and letter sounds were made from exact phonemes,
+and every take was checked automatically for phoneme errors before the best one was kept. `tools/voice/README.md` explains
+the method.
 
-## Recording tips
+## Replacing a clip
 
-- Record each item on its own, in a quiet room, at a normal speaking pace.
-- Say short vowels clearly: /ă/ as in apple, /ĭ/ as in igloo, /ŏ/ as in octopus.
+- Keep the exact file name below. Save as WAV or MP3 (if both exist, the MP3 is used).
+- Then run `node tools/build-audio.js` to rebuild the `.js` file the page loads.
+- Say short vowels clearly: /ă/ as in apple, /ĭ/ as in igloo, /ŏ/ as in octopus. Short o is always
+  the open "ah" of dot, so dog is "dahg" and ton is "tahn".
 - C and g are always hard here: "cit" is /k/ /ĭ/ /t/, not "sit".
-- Save as WAV or MP3 with the exact file name below. MP3 files need the same name with .mp3 and a
-  matching change to `CLIP_EXT` in `js/sound.js`.
+- Letter sounds are just the sound, with no "uh": /t/ not "tuh", and /n/ is a short hum.
 - Trim silence at the start and end, and keep levels even between clips.
+
+## Letter sounds (8)
+
+| File | Say |
+| --- | --- |
+| `sounds/a.wav` | /ă/ as in apple |
+| `sounds/i.wav` | /ĭ/ as in igloo |
+| `sounds/o.wav` | /ŏ/ as in octopus ("ah") |
+| `sounds/t.wav` | /t/ |
+| `sounds/d.wav` | /d/ |
+| `sounds/c.wav` | /k/ |
+| `sounds/g.wav` | /g/ (hard, as in goat) |
+| `sounds/n.wav` | /n/ |
 
 ## Words (67)
 
@@ -34,7 +49,7 @@ so record these with a real voice before shipping to schools.
 | `words/tod.wav` | tod |
 | `words/toc.wav` | toc |
 | `words/tog.wav` | tog |
-| `words/ton.wav` | ton |
+| `words/ton.wav` | ton ("tahn", a made-up word) |
 | `words/dat.wav` | dat |
 | `words/dad.wav` | dad |
 | `words/dac.wav` | dac |
@@ -47,7 +62,7 @@ so record these with a real voice before shipping to schools.
 | `words/dot.wav` | dot |
 | `words/dod.wav` | dod |
 | `words/doc.wav` | doc |
-| `words/dog.wav` | dog |
+| `words/dog.wav` | dog ("dahg") |
 | `words/don.wav` | don |
 | `words/cat.wav` | cat |
 | `words/cad.wav` | cad |
@@ -102,7 +117,7 @@ so record these with a real voice before shipping to schools.
 | `keywords/goat.wav` | goat (keyword for g) |
 | `keywords/nest.wav` | nest (keyword for n) |
 
-## Sentences (20)
+## Sentences (19)
 
 | File | Say |
 | --- | --- |
@@ -124,5 +139,4 @@ so record these with a real voice before shipping to schools.
 | `sentences/tag.wav` | The tag is on the gift. |
 | `sentences/tan.wav` | The sand is tan. |
 | `sentences/tin.wav` | The cookies are in a tin. |
-| `sentences/ton.wav` | A ton is very, very heavy! |
 | `sentences/tot.wav` | A tot is a little kid. |

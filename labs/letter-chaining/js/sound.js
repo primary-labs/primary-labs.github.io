@@ -118,9 +118,10 @@
   }
 
   /* ---------- bundled clips (assets/audio/) ----------
-     Every word, keyword picture, and sentence ships as a recorded clip, so the page sounds the
-     same on every computer and never depends on the device voice. Device voices differ by
-     system, and on some Macs they pop loudly each time they start.
+     Every letter sound, word, keyword picture, and sentence ships as a clip in the page's own
+     computer-generated voice (see tools/voice/), so the page sounds the same on every computer
+     and never depends on the device voice. Device voices differ by system, can't say a letter
+     sound on its own, and on some Macs they pop loudly each time they start.
      Each clip is wrapped in a .js file (see tools/build-audio.js), because the page's security
      policy stops scripts from downloading files directly. */
 
@@ -168,6 +169,7 @@
   }
 
   function hasWordClip(w) { return !!(PL.isWord && PL.isWord(w)); }
+  function hasSoundClip(id) { return !!(PL.LETTER_IDS && PL.LETTER_IDS.indexOf(id) !== -1); }
   function hasSentenceClip(w) { return !!(PL.WORDS && PL.WORDS[w] && PL.WORDS[w].sentence); }
 
   /* Plays a decoded clip through the shared output with short fades in and out. */
@@ -328,20 +330,42 @@
       });
     },
 
-    /* A letter sound: teacher recording, else the keyword ("apple") as a bundled clip.
-       Recorded keywords stand in because nothing but a person can say an isolated sound clearly. */
+    /* Just the letter sound, for tiles, Blend, and Sound Spy: teacher recording, else the
+       bundled clip. Resolves true if a sound played. Letters with neither (from teacher-made
+       chains) play nothing and leave whatever is already playing alone. */
+    letterSound: function (id, my) {
+      if (muted || (!hasClip('sound:' + id) && !hasSoundClip(id))) return Promise.resolve(false);
+      if (my === undefined) my = Sound.begin();
+      return teacherClip('sound:' + id, my).then(function (ok) {
+        if (ok) return true;
+        return hasSoundClip(id) ? playBundled('sounds/' + id, my) : false;
+      });
+    },
+
+    hasLetterSound: function (id) { return hasClip('sound:' + id) || hasSoundClip(id); },
+
+    /* A Sounds-page card: the sound (teacher recording, else the bundled clip), then its
+       keyword ("/ă/ … apple"). If no sound plays, the keyword plays alone. */
     letter: function (id, my, opts) {
       if (muted) return Promise.resolve('muted');
       if (my === undefined) my = Sound.begin();
-      return teacherClip('sound:' + id, my).then(function (ok) {
-        if (ok) return 'teacher';
-        if (opts && opts.silentFallback) return 'none';
+      return teacherClip('sound:' + id, my).then(function (teacher) {
+        if (!teacher && opts && opts.silentFallback) return 'none';
         var l = PL.letter(id);
         var keyword = l ? l.keyword : id;
-        return (l ? playBundled('keywords/' + keyword, my) : Promise.resolve(false)).then(function (played) {
-          if (played) return 'keyword';
-          if (my !== token) return 'none';
-          return speakNow(keyword, 0.8, my).then(function (spoke) { return spoke ? 'keyword' : 'none'; });
+        function sayKeyword(after) {
+          if (my !== token) return Promise.resolve('stopped'); // cut off by a newer sound, not a failure
+          return (l ? playBundled('keywords/' + keyword, my) : Promise.resolve(false)).then(function (played) {
+            if (played) return after || 'keyword';
+            if (my !== token) return 'stopped';
+            return speakNow(keyword, 0.8, my).then(function (spoke) { return spoke ? after || 'keyword' : after || 'none'; });
+          });
+        }
+        var sound = teacher ? Promise.resolve(true)
+          : hasSoundClip(id) ? playBundled('sounds/' + id, my) : Promise.resolve(false);
+        return sound.then(function (played) {
+          if (!played) return my !== token ? 'stopped' : sayKeyword();
+          return wait(450).then(function () { return sayKeyword(teacher ? 'teacher' : 'clip'); });
         });
       });
     },
@@ -359,15 +383,19 @@
     },
 
     /* Start loading clips before they're needed, so the first play has no delay.
-       Takes word lists; loads each word's clip and its sentence. */
+       Takes word lists; loads each word's clip, its sentence, and its letter sounds. */
     preloadWords: function (words) {
       (words || []).forEach(function (w) {
         if (hasWordClip(w)) loadClip('words/' + w);
         if (hasSentenceClip(w)) loadClip('sentences/' + w);
+        String(w).split('').forEach(function (ch) { if (hasSoundClip(ch)) loadClip('sounds/' + ch); });
       });
     },
     preloadKeywords: function () {
-      (PL.LETTERS || []).forEach(function (l) { loadClip('keywords/' + l.keyword); });
+      (PL.LETTERS || []).forEach(function (l) {
+        loadClip('sounds/' + l.id);
+        loadClip('keywords/' + l.keyword);
+      });
     },
 
     /* Called by each clip's .js file (assets/audio/). */

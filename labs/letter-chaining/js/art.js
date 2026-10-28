@@ -108,13 +108,6 @@
     '<path d="M16 102 q10 -12 20 0 t20 0 t20 0 t20 0 t20 0" fill="none" stroke="#C39B6B" stroke-width="7"/>'
   );
 
-  A.ton = svg(
-    '<path d="M46 54 Q46 28 60 28 Q74 28 74 54" fill="none" stroke-width="12"/>' +
-    '<path d="M46 54 Q46 28 60 28 Q74 28 74 54" fill="none" stroke="#4A5568" stroke-width="6"/>' +
-    '<path d="M26 104 L38 50 L82 50 L94 104 Z" fill="#4A5568"/>' +
-    '<text x="60" y="88" text-anchor="middle" font-size="19" font-weight="700" fill="#FFFFFF" stroke="none">1 TON</text>'
-  );
-
   A.tot = svg(
     '<path d="M30 116 Q30 92 60 92 Q90 92 90 116 Z" fill="#F7A1B5"/>' +
     '<circle cx="60" cy="58" r="33" fill="#F2C9A0"/>' +

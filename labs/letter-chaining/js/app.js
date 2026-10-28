@@ -159,7 +159,7 @@
   function allWords() {
     var set = {};
     Object.keys(PL.WORDS).forEach(function (w) { set[w] = true; });
-    customChains().forEach(function (c) { c.words.forEach(function (w) { set[w] = true; }); });
+    allChains().forEach(function (c) { c.words.forEach(function (w) { set[w] = true; }); });
     return Object.keys(set).sort();
   }
 
@@ -259,8 +259,8 @@
       var note = $('soundsNote');
       note.hidden = missing === 0;
       note.textContent = missing === PL.LETTERS.length
-        ? 'You will hear the keyword for each sound. Teachers can record the real sounds in Teacher Corner.'
-        : 'Cards without "Teacher voice" play the keyword. Teachers can record them in Teacher Corner.';
+        ? 'The sounds use the page\'s computer-generated voice. Teachers can record their own in Teacher Corner.'
+        : 'Cards without "Teacher voice" use the page\'s computer-generated voice. Teachers can record them in Teacher Corner.';
     }
   };
 
@@ -507,7 +507,7 @@
       } else {
         s.selected = s.selected === i && mode() === 'change' ? -1 : i;
       }
-      if (s.selected === i && s.tiles[i]) Sound.clip('sound:' + s.tiles[i]);
+      if (s.selected === i && s.tiles[i]) Sound.letterSound(s.tiles[i]);
       setFeedback(s.selected === -1 ? '' : mode() === 'change' ? 'Now tap the new letter for the ' + positionName(i, s.tiles.length) + ' sound.' : '');
       renderBoard();
       renderBank();
@@ -542,7 +542,8 @@
         if (wouldBlock(idx, ch)) return refuse(idx);
         s.tiles[idx] = ch;
         s.selected = s.tiles.indexOf('');
-        Sound.clip('sound:' + ch);
+        // The last tile skips its sound: the chime and the blend that follow would play over it
+        if (!s.tiles.every(Boolean)) Sound.letterSound(ch);
         renderBoard();
         renderBank();
         renderTools();
@@ -664,7 +665,8 @@
       var my = Sound.begin();
       var slots = Array.prototype.slice.call(document.querySelectorAll('#board .slot'));
       var board = $('board');
-      var real = knownWord || !!PL.WORDS[word] || allWords().indexOf(word) !== -1;
+      var real = knownWord || PL.isRealWord(word) ||
+        customChains().some(function (c) { return c.words.indexOf(word) !== -1; });
       s.blendId = my;
       s.busy = true;
       $('blendBtn').disabled = true;
@@ -679,7 +681,7 @@
         slots.forEach(function (x) { x.classList.remove('is-lit'); });
         el.classList.add('is-lit');
         i++;
-        return Sound.clip('sound:' + ch, my).then(function (played) {
+        return Sound.letterSound(ch, my).then(function (played) {
           return Sound.wait(played ? 220 : 650, my);
         }).then(nextSound);
       }
@@ -857,7 +859,7 @@
       p.appendChild(tileEl(cur.letter, 'tile--md tile--inline'));
       p.appendChild(document.createTextNode('?'));
       p.appendChild(h('span', { class: 'sr-only' }, ' The letter ' + cur.letter + '.'));
-      $('spySound').hidden = !Voice.has('sound:' + cur.letter);
+      $('spySound').hidden = !Sound.hasLetterSound(cur.letter);
 
       var boxes = $('spyBoxes');
       boxes.innerHTML = '';
@@ -937,7 +939,7 @@
     function wire() {
       $('spyListen').addEventListener('click', function () { Sound.word(q().word); });
       $('spyPicture').addEventListener('click', function () { Sound.word(q().word); });
-      $('spySound').addEventListener('click', function () { Sound.clip('sound:' + q().letter); });
+      $('spySound').addEventListener('click', function () { Sound.letterSound(q().letter); });
       $('spyNext').addEventListener('click', next);
       $('spyAgain').addEventListener('click', function () { reset(true); });
     }
@@ -1150,7 +1152,7 @@
           title: (l.kind === 'vowel' ? l.label : '/' + (l.id === 'c' ? 'k' : l.id) + '/') + ' as in ' + l.keyword,
           spoken: l.label + ' sound',
           tip: l.tip,
-          fallback: 'Not recorded yet. Kids hear "' + l.keyword + '".',
+          fallback: 'Not recorded yet. Kids hear the page\'s voice.',
           maxMs: 4000
         }));
       });
@@ -1182,7 +1184,8 @@
           visual: visual,
           title: w,
           spoken: 'the word ' + w,
-          fallback: PL.isWord(w) ? 'Uses the page’s voice' : 'Uses the computer’s voice',
+          fallback: PL.isWord(w) ? 'Uses the page’s voice' : 'Uses the device’s voice',
+          tip: PL.isWord(w) && !PL.isRealWord(w) && w.indexOf('o') === 1 ? 'Made-up word. Say o like the "ah" in dot.' : '',
           maxMs: 4000,
           compact: true
         }));

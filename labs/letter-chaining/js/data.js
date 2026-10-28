@@ -40,7 +40,6 @@
     can: { art: 'can', sentence: 'The soup is in a can.' },
     tan: { art: 'tan', sentence: 'The sand is tan.' },
     tin: { art: 'tin', sentence: 'The cookies are in a tin.' },
-    ton: { art: 'ton', sentence: 'A ton is very, very heavy!' },
     tot: { art: 'tot', sentence: 'A tot is a little kid.' },
     not: { sentence: 'The soup is not hot.' },
     nod: { art: 'nod', sentence: 'Nod your head to say yes.' },

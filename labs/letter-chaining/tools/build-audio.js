@@ -16,7 +16,7 @@ var fs = require('fs');
 var path = require('path');
 
 var AUDIO = path.join(__dirname, '..', 'assets', 'audio');
-var GROUPS = ['words', 'keywords', 'sentences'];
+var GROUPS = ['words', 'keywords', 'sentences', 'sounds'];
 var TYPES = { '.wav': 'audio/wav', '.mp3': 'audio/mpeg' };
 
 function build() {
