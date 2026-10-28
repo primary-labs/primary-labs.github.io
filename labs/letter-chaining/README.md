@@ -11,7 +11,7 @@ It is aligned to NYS Next Generation ELA standards:
 | Area | What kids and teachers do |
 | --- | --- |
 | **Meet the Sounds** | Picture cards for each letter (apple, igloo, octopus, top, duck, cup, goat, nest). Tap a card to hear it. |
-| **Letter Chains** | Five built-in chains (for example cat → cot → dot → dog → dig → did → dad). Kids hear the new word, tap the tile that changes (beginning, middle, or end), then tap the new letter. "Blend it" lights each sound, then sweeps to say the word fast. |
+| **Letter Chains** | Five built-in chains (for example cat → cot → dot → dog → dig → did → dad). Kids hear the new word, tap the tile that changes (beginning, middle, or end), then tap the new letter. "Blend it" lights each sound, then sweeps so kids say the word fast on their own. |
 | **Sound Spy** | Nine quick rounds: "Where do you hear /t/?" Kids tap beginning, middle, or end. |
 | **Teacher Corner** | Press and hold to open. Record your voice for every sound and word, choose how long recordings are kept, make custom chains, and read the standards notes and a 5-minute routine. |
 

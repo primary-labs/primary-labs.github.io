@@ -659,7 +659,7 @@
       $('readChainBtn').focus({ preventScroll: true });
     }
 
-    /* Light each sound in order (kids say it), then sweep and say the word. */
+    /* Light each sound in order (kids say it), then sweep while kids say the word fast. */
     function blend(word, knownWord) {
       var my = Sound.begin();
       var slots = Array.prototype.slice.call(document.querySelectorAll('#board .slot'));
@@ -689,12 +689,8 @@
         setFeedback(real ? 'Now say it fast!' : 'Now say it fast! (Is it a real word?)', 'info');
         restartAnim(board, 'is-sweep');
         slots.forEach(function (x) { x.classList.add('is-lit'); });
-        return Sound.wait(reduceMotion() ? 200 : 700, my).then(function (alive) {
-          if (!alive || !real) return;
-          return Sound.word(word, my);
-        }).then(function () {
-          return Sound.wait(250, my);
-        }).then(finish);
+        // Kids say the word themselves, so the page stays quiet and gives them a moment.
+        return Sound.wait((reduceMotion() ? 200 : 700) + 1500, my).then(finish);
       });
 
       function finish() {
