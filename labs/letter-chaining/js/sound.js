@@ -68,8 +68,11 @@
 
   // Audio can only start after a tap or key press. Open the output on the first one,
   // so it's already running when the first sound plays.
+  // iPhone and iPad Safari only count touchend and click as a tap (touchstart might be the
+  // start of a scroll). Teacher recordings load from storage before playing, which ends the
+  // tap, so the output has to be opened here, during the tap itself.
   function warm() { if (!muted) audio(); }
-  ['pointerdown', 'touchstart', 'keydown'].forEach(function (ev) {
+  ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'].forEach(function (ev) {
     document.addEventListener(ev, warm, { capture: true, passive: true });
   });
   // Let the output rest while the tab is in the background.

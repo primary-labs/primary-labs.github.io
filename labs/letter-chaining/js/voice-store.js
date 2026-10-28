@@ -9,6 +9,9 @@
  *  - We never ask the browser for persistent storage, so it may also clear recordings early.
  *  - If IndexedDB is unavailable (e.g. some private windows), recordings are kept in memory
  *    only and vanish when the page closes.
+ *  - Audio is stored as raw bytes (an ArrayBuffer), not a Blob. Safari on iPhone and iPad
+ *    can't reliably read Blobs back out of IndexedDB after a reload, and won't store them
+ *    at all in Private Browsing.
  */
 (function () {
   'use strict';
@@ -61,6 +64,16 @@
   function getRetention() {
     var r = safeGet('localStorage', RETENTION_KEY);
     return RETENTION[r] ? r : DEFAULT_RETENTION;
+  }
+
+  function readBuffer(blob) {
+    if (blob.arrayBuffer) return blob.arrayBuffer();
+    return new Promise(function (resolve, reject) {
+      var fr = new FileReader();
+      fr.onload = function () { resolve(fr.result); };
+      fr.onerror = function () { reject(fr.error); };
+      fr.readAsArrayBuffer(blob);
+    });
   }
 
   function req(r) {
@@ -213,18 +226,20 @@
     save: function (id, blob, duration) {
       if (!blob || !/^audio\//.test(blob.type || '')) return Promise.reject(new Error('Not an audio recording.'));
       if (blob.size > MAX_BYTES) return Promise.reject(new Error('Recording is too large. Keep it under a few seconds.'));
-      var rec = {
-        id: id,
-        blob: blob,
-        type: blob.type,
-        size: blob.size,
-        duration: duration || 0,
-        createdAt: Date.now(),
-        sessionId: sessionId
-      };
-      return dbPut(rec).then(function () {
-        index.set(id, meta(rec));
-        notify();
+      return readBuffer(blob).then(function (data) {
+        var rec = {
+          id: id,
+          data: data,
+          type: blob.type,
+          size: blob.size,
+          duration: duration || 0,
+          createdAt: Date.now(),
+          sessionId: sessionId
+        };
+        return dbPut(rec).then(function () {
+          index.set(id, meta(rec));
+          notify();
+        });
       });
     },
 
@@ -232,7 +247,11 @@
       if (!index.has(id)) return Promise.resolve(null);
       var m = index.get(id);
       if (isExpired(m, Date.now())) return purgeExpired().then(function () { return null; });
-      return dbGet(id).then(function (rec) { return rec ? rec.blob : null; }).catch(function () { return null; });
+      return dbGet(id).then(function (rec) {
+        if (!rec) return null;
+        if (rec.data) return new Blob([rec.data], { type: rec.type });
+        return rec.blob || null; // saved by an older version of this page
+      }).catch(function () { return null; });
     },
 
     remove: function (id) {
