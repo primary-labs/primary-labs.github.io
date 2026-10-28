@@ -1,0 +1,200 @@
+/* Primary Labs home page
+   Color is phonics information: red = vowel, blue = consonant, yellow = the sound that changed.
+   One typeface: Andika, designed for beginning readers. */
+
+@font-face {
+  font-family: "Andika";
+  src: url("fonts/andika-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Andika";
+  src: url("fonts/andika-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --paper: #FFFFFF;
+  --ink: #1F2A44;
+  --ink-soft: #4A5568;
+  --vowel: #E4572E;
+  --consonant: #2B6CB0;
+  --changed: #FFC93C;
+  --rule: #A9C8EA;
+  --rule-soft: #E3EEF9;
+  --wash: #F5F9FD;
+
+  /* Type scale (18px base) */
+  --t-small: 0.875rem;
+  --t-body: 1.125rem;
+  --t-lede: 1.3125rem;
+  --t-h3: 1.3125rem;
+  --t-h2: 2rem;
+  --t-h1: clamp(2.25rem, 5.4vw, 3.75rem);
+
+  --font: "Andika", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--t-body);
+  line-height: 1.55;
+}
+
+h1, h2, h3 { margin: 0; font-weight: 700; }
+p, dl, dd, ol { margin: 0; }
+a { color: var(--consonant); }
+abbr[title] { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+
+:focus-visible { outline: 3px solid var(--consonant); outline-offset: 3px; border-radius: 4px; }
+main:focus { outline: none; }
+
+.wrap { width: 100%; max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 40px; } }
+
+.skip-link {
+  position: absolute; left: 12px; top: -60px; z-index: 10;
+  background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 8px;
+  font-weight: 700; text-decoration: none;
+}
+.skip-link:focus { top: 12px; }
+
+/* ---------- Header ---------- */
+.site-header { border-bottom: 1px solid var(--rule-soft); }
+.header-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 72px; }
+.brand { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; }
+.brand-mark { width: 36px; height: 36px; flex: none; }
+.brand-name { font-weight: 700; font-size: 1.25rem; }
+.site-nav { display: flex; gap: 24px; }
+.site-nav a { color: var(--ink); text-decoration: none; font-weight: 700; font-size: 1rem; padding: 6px 0; }
+.site-nav a:hover { color: var(--consonant); }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-block;
+  font: inherit; font-weight: 700; font-size: 1.0625rem; line-height: 1.2; text-decoration: none;
+  padding: 14px 24px; border-radius: 12px; cursor: pointer;
+}
+.btn--primary { background: var(--ink); color: #fff; border: 2px solid var(--ink); }
+.btn--primary:hover { background: #2C3A5C; }
+.btn--secondary { background: var(--paper); color: var(--ink); border: 2px solid var(--ink); }
+.btn--secondary:hover { background: var(--wash); }
+.text-link { font-weight: 700; color: var(--ink); text-underline-offset: 4px; }
+
+/* ---------- Intro ---------- */
+.intro { padding: 72px 0 48px; }
+.intro h1 { font-size: var(--t-h1); line-height: 1.1; letter-spacing: -0.015em; max-width: 14em; }
+.lede { margin-top: 20px; font-size: var(--t-lede); color: var(--ink-soft); max-width: 32em; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; margin-top: 32px; }
+
+/* ---------- Ruled paper sample ---------- */
+.paper {
+  background: var(--wash);
+  border-block: 1px solid var(--rule-soft);
+  padding: 48px 0;
+}
+.paper-inner { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; align-items: center; }
+@media (min-width: 860px) { .paper-inner { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 56px; } }
+
+/* Primary handwriting lines: solid top line, dashed midline at x-height, solid baseline.
+   Positions are in em of the letters, so the lines scale with them. */
+.ruled {
+  --top: 0.128em;
+  --mid: 0.418em;
+  --base: 0.918em;
+  position: relative;
+  font-size: clamp(7.5rem, 22vw, 13rem);
+  min-width: 0;
+}
+.ruled::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1em;
+  background:
+    linear-gradient(var(--rule), var(--rule)) 0 var(--top) / 100% 3px no-repeat,
+    repeating-linear-gradient(90deg, var(--rule) 0 14px, transparent 14px 26px) 0 var(--mid) / 100% 3px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) 0 var(--base) / 100% 3px no-repeat;
+}
+.word {
+  position: relative; isolation: isolate;
+  display: flex; gap: 0.06em;
+  height: 1em; line-height: 1;
+  font-weight: 700; padding-left: 0.08em;
+}
+.ch { position: relative; display: inline-block; }
+.ch--v { color: var(--vowel); }
+.ch--c { color: var(--consonant); }
+.ch.is-changed::before {
+  content: ""; position: absolute; z-index: -1;
+  left: -0.06em; right: -0.06em; top: var(--top); bottom: calc(1em - var(--base) - 0.06em);
+  background: var(--changed); border-radius: 0.08em;
+}
+.ch.is-changed { animation: drop-in 260ms ease-out; }
+@keyframes drop-in {
+  from { transform: translateY(-0.12em); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .ch.is-changed { animation: none; } }
+
+.demo-side { display: grid; gap: 20px; justify-items: start; max-width: 28em; }
+.demo-status { font-size: var(--t-lede); line-height: 1.4; min-height: 2.8em; }
+.demo-trail { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 4px; color: var(--ink-soft); }
+.demo-trail li + li::before { content: "to"; margin-right: 4px; font-size: var(--t-small); color: #6B7588; }
+.demo-trail li[aria-current] { color: var(--ink); font-weight: 700; }
+.demo-key { font-size: var(--t-small); color: var(--ink-soft); }
+.key { white-space: nowrap; }
+.key::before {
+  content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px;
+}
+.key--v::before { background: var(--vowel); }
+.key--c::before { background: var(--consonant); }
+.key--v { margin-right: 12px; }
+
+/* ---------- Sections ---------- */
+.section { padding: 88px 0; }
+.section h2 { font-size: var(--t-h2); line-height: 1.2; }
+.section-lede { margin-top: 12px; font-size: var(--t-lede); color: var(--ink-soft); max-width: 32em; }
+
+/* Labs */
+.lab {
+  margin-top: 32px; padding-top: 28px;
+  border-top: 3px solid var(--ink);
+  display: grid; gap: 20px; justify-items: start;
+}
+.lab-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
+.lab h3 { font-size: 1.75rem; line-height: 1.2; }
+.lab-for { color: var(--ink-soft); }
+.lab-desc { font-size: var(--t-lede); max-width: 34em; }
+.lab-parts { display: grid; gap: 16px 40px; width: 100%; max-width: 760px; }
+@media (min-width: 640px) { .lab-parts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.lab-parts div { padding-left: 16px; border-left: 3px solid var(--rule); }
+.lab-parts dt { font-weight: 700; }
+.lab-parts dd { color: var(--ink-soft); }
+.lab-standards { font-size: var(--t-small); color: var(--ink-soft); }
+.lab-next { margin-top: 48px; color: var(--ink-soft); max-width: 36em; }
+
+/* Teachers */
+.section--teachers { background: var(--wash); border-top: 1px solid var(--rule-soft); }
+.notes { display: grid; gap: 32px; margin-top: 40px; }
+@media (min-width: 820px) { .notes { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px; } }
+.note h3 { font-size: var(--t-h3); line-height: 1.3; }
+.note p { margin-top: 8px; color: var(--ink-soft); }
+
+/* ---------- Footer ---------- */
+.site-footer { background: var(--ink); color: #D5DBE6; padding: 40px 0 48px; }
+.footer-inner { display: grid; gap: 4px; }
+.footer-brand { color: #fff; font-weight: 700; font-size: 1.125rem; }
+.fine { font-size: var(--t-small); color: #A9B3C4; }
+
+.nowrap { white-space: nowrap; }

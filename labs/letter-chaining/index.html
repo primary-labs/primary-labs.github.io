@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Privacy: everything runs in this page. connect-src 'none' means no script can send data anywhere,
+       so teacher recordings can never leave the device. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Letter Chains | Primary Labs</title>
+  <meta name="description" content="Letter chaining for 1st grade: change one sound to make a new word. Short a, i, o and t, d, c, g, n. Aligned to NYS Next Generation ELA 1RF2b and 1RF2c.">
+  <meta name="theme-color" content="#FFF8EC">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/fonts/andika-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to activities</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="#home" aria-label="Primary Labs home">
+        <span class="brand-mark" data-art="logo"></span>
+        <span class="brand-name">Primary Labs</span>
+      </a>
+      <nav class="site-nav" aria-label="Activities">
+        <a href="#sounds" data-nav="sounds">Sounds</a>
+        <a href="#chains" data-nav="chains"><span class="nav-full">Letter Chains</span><span class="nav-short">Chains</span></a>
+        <a href="#spy" data-nav="spy">Sound Spy</a>
+        <a href="#teacher" data-nav="teacher" class="nav-teacher"><span class="nav-full">Teacher Corner</span><span class="nav-short">Teachers</span></a>
+      </nav>
+      <button type="button" class="icon-btn mute-btn" id="muteBtn" aria-pressed="false" aria-label="Sound is on. Turn sound off."></button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ===================== HOME ===================== -->
+    <section class="view" id="view-home" data-view="home" aria-labelledby="home-title">
+      <div class="hero">
+        <div class="hero-head">
+          <div>
+            <h1 id="home-title">Letter Chains</h1>
+            <p class="hero-lede">Change one sound. Make a new word.</p>
+          </div>
+          <a class="btn btn--big btn--primary" href="#chains">Start a chain <span class="btn-icon" data-icon="next"></span></a>
+        </div>
+        <div class="hero-chain" id="heroChain" role="img" aria-label="Example chain: cat changes its middle sound to make cot. Cot changes its beginning sound to make dot. Dot changes its end sound to make dog."></div>
+      </div>
+
+      <div class="activity-grid">
+        <a class="activity-card" href="#sounds">
+          <span class="activity-art" data-art="octopus"></span>
+          <span class="activity-title">Meet the Sounds</span>
+          <span class="activity-text">Tap a letter. Hear its sound.</span>
+        </a>
+        <a class="activity-card" href="#chains">
+          <span class="activity-art" data-art="chainHero"></span>
+          <span class="activity-title">Letter Chains</span>
+          <span class="activity-text">Swap one letter to make a new word.</span>
+        </a>
+        <a class="activity-card" href="#spy">
+          <span class="activity-art" data-art="magnifier"></span>
+          <span class="activity-title">Sound Spy</span>
+          <span class="activity-text">Is the sound at the beginning, middle, or end?</span>
+        </a>
+      </div>
+
+      <aside class="teacher-strip">
+        <span class="teacher-strip-icon" data-art="shield"></span>
+        <p><strong>Teachers:</strong> this page follows NYS Next Generation ELA standards
+          <abbr title="Orally produce single-syllable words by blending sounds (phonemes), including consonant blends.">1RF2b</abbr> and
+          <abbr title="Isolate and pronounce initial, medial vowel, and final sounds (phonemes) in spoken single-syllable words.">1RF2c</abbr>.
+          You can record your own voice for every sound and word. Recordings stay in this browser.</p>
+        <a class="btn btn--ghost" href="#teacher">Teacher Corner</a>
+      </aside>
+    </section>
+
+    <!-- ===================== SOUNDS ===================== -->
+    <section class="view" id="view-sounds" data-view="sounds" aria-labelledby="sounds-title" hidden>
+      <div class="view-head">
+        <h1 id="sounds-title">Meet the Sounds</h1>
+        <p class="view-lede">Tap a card to hear the sound. Say it with me!</p>
+      </div>
+      <h2 class="group-title"><span class="swatch swatch--vowel"></span>Short vowels</h2>
+      <div class="sound-grid" id="vowelGrid"></div>
+      <h2 class="group-title"><span class="swatch swatch--consonant"></span>Consonants</h2>
+      <div class="sound-grid" id="consonantGrid"></div>
+      <p class="note" id="soundsNote" hidden></p>
+    </section>
+
+    <!-- ===================== CHAINS ===================== -->
+    <section class="view" id="view-chains" data-view="chains" aria-labelledby="chains-title" hidden>
+      <div class="view-head view-head--row">
+        <div>
+          <h1 id="chains-title">Letter Chains</h1>
+          <p class="view-lede">Listen to the new word. Which sound changed? Swap <strong>one</strong> letter.</p>
+        </div>
+        <div class="chain-picker" id="chainPicker" role="group" aria-label="Pick a chain"></div>
+      </div>
+
+      <div class="stage" id="chainStage">
+        <div class="stage-top">
+          <div class="progress" id="chainProgress"></div>
+          <button type="button" class="btn btn--listen" id="listenBtn"><span class="btn-icon" data-icon="speaker"></span><span>Hear the word</span></button>
+        </div>
+
+        <p class="prompt" id="chainPrompt"></p>
+
+        <div class="board" id="board" role="group" aria-label="Word board"></div>
+
+        <div class="tools">
+          <button type="button" class="btn btn--tool" id="blendBtn"><span class="btn-icon" data-icon="blend"></span>Blend it</button>
+          <button type="button" class="btn btn--tool" id="hintBtn"><span class="btn-icon" data-icon="bulb"></span>Hint</button>
+        </div>
+
+        <p class="feedback" id="chainFeedback" role="status" aria-live="polite"></p>
+
+        <div class="reveal" id="reveal" hidden>
+          <div class="reveal-art" id="revealArt"></div>
+          <div class="reveal-body">
+            <p class="reveal-sentence" id="revealSentence"></p>
+            <div class="reveal-actions">
+              <button type="button" class="btn btn--ghost" id="sentenceBtn"><span class="btn-icon" data-icon="speaker"></span>Hear the sentence</button>
+              <button type="button" class="btn btn--big btn--primary" id="nextBtn">Next word <span class="btn-icon" data-icon="next"></span></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bank" id="bank" role="group" aria-label="Letter tiles"></div>
+
+        <div class="celebrate" id="celebrate" hidden>
+          <div class="confetti" id="confetti" aria-hidden="true"></div>
+          <p class="celebrate-title" id="celebrateTitle"></p>
+          <div class="celebrate-actions">
+            <button type="button" class="btn btn--big btn--primary" id="readChainBtn"><span class="btn-icon" data-icon="speaker"></span>Read the whole chain</button>
+            <button type="button" class="btn btn--ghost" id="againBtn">Do it again</button>
+            <button type="button" class="btn btn--ghost" id="nextChainBtn">Next chain <span class="btn-icon" data-icon="next"></span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="strip-wrap">
+        <h2 class="strip-title"><span class="strip-link" data-art="chainLink"></span>Our chain</h2>
+        <ol class="strip" id="strip"></ol>
+      </div>
+    </section>
+
+    <!-- ===================== SPY ===================== -->
+    <section class="view" id="view-spy" data-view="spy" aria-labelledby="spy-title" hidden>
+      <div class="view-head">
+        <h1 id="spy-title">Sound Spy</h1>
+        <p class="view-lede">Listen to the word. Where do you hear the sound: beginning, middle, or end?</p>
+      </div>
+
+      <div class="stage spy-stage" id="spyStage">
+        <div class="stars" id="spyStars" role="img" aria-label="Score"></div>
+        <div class="spy-card">
+          <button type="button" class="spy-picture" id="spyPicture" aria-label="Hear the word"></button>
+          <div class="spy-question">
+            <p class="prompt" id="spyPrompt"></p>
+            <div class="spy-buttons">
+              <button type="button" class="btn btn--listen" id="spyListen"><span class="btn-icon" data-icon="speaker"></span><span>Hear the word</span></button>
+              <button type="button" class="btn btn--ghost" id="spySound" hidden><span class="btn-icon" data-icon="speaker"></span><span>Hear the sound</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="boxes" id="spyBoxes" role="group" aria-label="Beginning, middle, or end"></div>
+        <p class="feedback" id="spyFeedback" role="status" aria-live="polite"></p>
+        <button type="button" class="btn btn--big btn--primary" id="spyNext" hidden>Next <span class="btn-icon" data-icon="next"></span></button>
+        <div class="celebrate" id="spyDone" hidden>
+          <div class="confetti" id="spyConfetti" aria-hidden="true"></div>
+          <p class="celebrate-title" id="spyDoneTitle"></p>
+          <div class="celebrate-actions">
+            <button type="button" class="btn btn--big btn--primary" id="spyAgain">Play again</button>
+            <a class="btn btn--ghost" href="#chains">Go to Letter Chains</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TEACHER ===================== -->
+    <section class="view" id="view-teacher" data-view="teacher" aria-labelledby="teacher-title" hidden>
+      <div class="view-head">
+        <h1 id="teacher-title">Teacher Corner</h1>
+        <p class="view-lede">Record your voice, make your own chains, and see how this lesson maps to the standards.</p>
+      </div>
+
+      <div class="gate" id="gate">
+        <span class="gate-icon" data-icon="lock"></span>
+        <p class="gate-title">This part is for grown-ups.</p>
+        <p class="gate-text">Press and hold the button to open.</p>
+        <button type="button" class="gate-btn" id="gateBtn">
+          <span class="gate-fill" id="gateFill"></span>
+          <span class="gate-label">Hold to open</span>
+        </button>
+      </div>
+
+      <div class="teacher" id="teacherPanel" hidden>
+
+        <div class="card card--privacy">
+          <div class="card-head">
+            <span class="card-icon" data-art="shield"></span>
+            <h2>Your voice stays on this device</h2>
+          </div>
+          <ul class="checks">
+            <li><strong>Never sent anywhere.</strong> Recordings are saved only on this computer, in this web browser. The page can't send them anywhere else.</li>
+            <li><strong>Temporary.</strong> Recordings delete themselves after the time you choose below.</li>
+            <li><strong>Mic only when you ask.</strong> The microphone turns on only when you press Record, and turns off as soon as you stop.</li>
+            <li><strong>You're in control.</strong> Delete one recording or all of them at any time.</li>
+            <li><strong>Shared computer?</strong> Choose "Until this tab closes", or press "Delete all" when you finish.</li>
+          </ul>
+          <p class="fine">Only record your own voice. Please don't record students.</p>
+        </div>
+
+        <div class="card">
+          <h2>Keep recordings for</h2>
+          <div class="segmented" id="retention" role="radiogroup" aria-label="Keep recordings for"></div>
+          <p class="storage-line" id="storageLine"></p>
+          <p class="warn" id="recUnsupported" hidden></p>
+          <div class="card-actions">
+            <button type="button" class="btn btn--danger" id="deleteAllBtn"><span class="btn-icon" data-icon="trash"></span>Delete all recordings</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Record the letter sounds</h2>
+          <p class="card-lede">Say just the sound. Each recording stops on its own after 4 seconds. When there's no recording, kids hear the keyword (like "apple") instead, because only a person can say a single sound clearly.</p>
+          <div class="rec-list rec-list--sounds" id="soundRecList"></div>
+        </div>
+
+        <div class="card">
+          <h2>Record the words</h2>
+          <p class="card-lede">Say each word clearly, once. Until you record a word, kids hear the page's own voice. New words from your chains use the computer's voice instead, so record those for the best sound.</p>
+          <div class="rec-list rec-list--words" id="wordRecList"></div>
+        </div>
+
+        <div class="card">
+          <h2>Make your own chain</h2>
+          <p class="card-lede">Type 2- or 3-letter words in order, using any letters. Each word changes exactly one letter, and every word in a chain is the same length. Every word gets a picture. Made-up words like "zog" get their own creature.</p>
+          <form class="chain-form" id="chainForm" novalidate>
+            <label class="field">
+              <span>Chain name (optional)</span>
+              <input type="text" id="chainName" maxlength="30" autocomplete="off" placeholder="Our chain">
+            </label>
+            <label class="field field--wide">
+              <span>Words</span>
+              <input type="text" id="chainWords" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="cat, cot, dot, dog" required>
+            </label>
+            <button type="submit" class="btn btn--primary">Save chain</button>
+          </form>
+          <p class="form-msg" id="chainFormMsg" role="status" aria-live="polite"></p>
+          <ul class="custom-list" id="customList"></ul>
+          <p class="fine">Custom chains are saved in this browser only.</p>
+        </div>
+
+        <div class="card card--standards">
+          <h2>Standards</h2>
+          <p class="card-lede">NYS Next Generation English Language Arts Learning Standards: Grade 1, Reading Foundations (RF2: Demonstrate understanding of spoken words, syllables, and sounds).</p>
+          <div class="standards">
+            <div class="standard">
+              <p class="standard-code">1RF2b</p>
+              <blockquote>Orally produce single-syllable words by blending sounds (phonemes), including consonant blends.</blockquote>
+              <p><strong>Where:</strong> <em>Blend it</em> in Letter Chains. Each sound lights up for kids to say. Then the arrow sweeps and they say the whole word fast. After every new word, the page blends it once more.</p>
+            </div>
+            <div class="standard">
+              <p class="standard-code">1RF2c</p>
+              <blockquote>Isolate and pronounce initial, medial vowel, and final sounds (phonemes) in spoken single-syllable words.</blockquote>
+              <p><strong>Where:</strong> Every link in a chain asks, "Which sound changed: beginning, middle, or end?" Kids tap that sound's tile. <em>Sound Spy</em> practices finding a sound's position. <em>Hint</em> lights up the position that changes.</p>
+            </div>
+          </div>
+
+          <h3>A 5-minute chaining routine</h3>
+          <ol class="routine">
+            <li><strong>Say it.</strong> Play the new word (or say it yourself). Kids repeat it.</li>
+            <li><strong>Find it.</strong> Ask: "Which sound changed: beginning, middle, or end?" Use the traffic lights: green, yellow, red.</li>
+            <li><strong>Swap it.</strong> A student taps that tile, then taps the new letter.</li>
+            <li><strong>Blend it.</strong> Press <em>Blend it</em>. Say each sound as it lights up, then say it fast.</li>
+            <li><strong>Use it.</strong> Read the sentence. Ask a student to make their own sentence.</li>
+          </ol>
+
+          <h3>Tips</h3>
+          <ul class="tips">
+            <li>Vowel tiles are <span class="chip chip--vowel">red</span> and consonant tiles are <span class="chip chip--consonant">blue</span>. Every built-in word needs a red tile in the middle.</li>
+            <li>Keep stop sounds short (/t/, /d/, /k/, /g/). Stretch /nnn/.</li>
+            <li>Short o is the hardest vowel for many first graders. The "Short o Trail" chain keeps the vowel the same, so kids can focus on the beginning and end sounds.</li>
+            <li>On a projector or interactive board, students can also type letters on the keyboard. Arrow keys pick a tile.</li>
+          </ul>
+        </div>
+
+        <div class="lock-row">
+          <button type="button" class="btn btn--ghost" id="lockBtn"><span class="btn-icon" data-icon="lock"></span>Lock Teacher Corner</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-brand">Primary Labs</p>
+    <p>Letter Chains for short a, i, o and t, d, c, g, n</p>
+    <p class="fine">No accounts, no tracking. Teacher recordings stay in this browser and expire automatically.</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/pictures.js"></script>
+  <script src="js/voice-store.js"></script>
+  <script src="js/recorder.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
