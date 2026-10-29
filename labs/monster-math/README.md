@@ -15,7 +15,7 @@ It is aligned to NYS Next Generation Mathematics standards:
 | **Friends** | Monsters or robots. Same problems, different pictures and sound effects. |
 | **Numbers** | Up to 5, or up to 10. |
 
-A wrong answer is greyed out and the count resets, with a prompt to count again. A right answer earns a star and the friends dance. 🔊 repeats the problem and the instruction. 🔔 turns the sound effects on and off (speech stays on).
+A wrong answer is greyed out and the count resets, with a prompt to count again. A right answer earns a star and the friends dance. The speaker button repeats the problem and the instruction. The bell button turns the sound effects on and off (speech stays on).
 
 This lab started as a Claude artifact called "Monster Math & Words". Its reading tab was left out: Letter Chains covers that skill, and its letter sounds ("buh", "kuh") didn't meet Primary Labs' phoneme rules.
 
@@ -39,20 +39,19 @@ Every spoken line has an id in `js/phrases.js` (for example `problem-add-3-2` �
 node --test labs/monster-math/test/
 ```
 
-They check problem generation (ranges, answer choices, no repeats), that every line has a phrase, the audio tools, and that the page follows the site's security rules (no inline scripts or styles, nothing loaded from other sites).
+They check problem generation (ranges, answer choices, no repeats), that every line has a phrase, the audio tools, and the control icons. The site's security and design rules are checked for every page by `node --test test/` at the repo root.
 
 ## Files
 
 ```
 index.html             page shell
-css/styles.css         styles (Andika font, light and dark)
+css/styles.css         styles for this lab (shared look: ../../assets/primary-labs.css, see DESIGN.md)
 js/phrases.js          every spoken line: id, spoken text, on-screen text
 js/problems.js         problems and answer choices
 js/sound.js            clip player, device-voice fallback, sound effects
-js/art.js              monster and robot drawings, the red X
+js/art.js              monster and robot drawings, the red X, control icons
 js/app.js              the activity
 assets/audio/          clips (none yet), index.js, and the recording list
-assets/fonts/          Andika (SIL Open Font License)
 tools/                 build-audio.js, list-phrases.js
 test/                  Node tests
 ```

@@ -9,9 +9,10 @@
   <meta name="referrer" content="no-referrer">
   <title>Monster Math | Primary Labs</title>
   <meta name="description" content="Kindergarten adding and subtracting within 10. Count monsters or robots, cross some out, and pick the answer. Aligned to NYS Next Generation Math NY-K.OA.2a and NY-K.CC.4.">
-  <meta name="theme-color" content="#E8F0FA">
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="assets/fonts/andika-700.woff2" as="font" type="font/woff2" crossorigin>
+  <meta name="theme-color" content="#FFF8EC">
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../../assets/fonts/andika-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../assets/primary-labs.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -26,28 +27,28 @@
       <h1 class="lab-title">Monster Math</h1>
       <div class="tools">
         <span class="stars" id="stars" role="status" aria-label="0 stars">⭐ 0</span>
-        <button type="button" class="iconbtn" id="sfx" aria-pressed="true" aria-label="Sound effects">🔔</button>
+        <button type="button" class="icon-btn" id="sfx" aria-pressed="true" aria-label="Sound effects"></button>
       </div>
     </div>
   </header>
 
   <main class="wrap" id="main">
-    <section class="panel" id="math" tabindex="-1" aria-label="Math">
+    <section class="panel math" id="math" tabindex="-1" aria-label="Math">
       <div class="settings">
         <div class="row"><span class="label" id="op-label">Do</span>
-          <div class="seg" id="opSeg" role="group" aria-labelledby="op-label">
-            <button type="button" data-op="+" aria-pressed="true">➕ Add</button>
-            <button type="button" data-op="-" aria-pressed="false">➖ Minus</button>
+          <div class="segmented" id="opSeg" role="group" aria-labelledby="op-label">
+            <button type="button" data-op="+" aria-pressed="true"><span class="sym" aria-hidden="true">+</span> Add</button>
+            <button type="button" data-op="-" aria-pressed="false"><span class="sym" aria-hidden="true">−</span> Minus</button>
           </div>
         </div>
         <div class="row"><span class="label" id="kind-label">Friends</span>
-          <div class="seg" id="kindSeg" role="group" aria-labelledby="kind-label">
+          <div class="segmented" id="kindSeg" role="group" aria-labelledby="kind-label">
             <button type="button" data-kind="monster" aria-pressed="true">👾 Monsters</button>
             <button type="button" data-kind="robot" aria-pressed="false">🤖 Robots</button>
           </div>
         </div>
         <div class="row"><span class="label" id="max-label">Numbers</span>
-          <div class="seg" id="maxSeg" role="group" aria-labelledby="max-label">
+          <div class="segmented" id="maxSeg" role="group" aria-labelledby="max-label">
             <button type="button" data-max="5" aria-pressed="true">up to 5</button>
             <button type="button" data-max="10" aria-pressed="false">up to 10</button>
           </div>
@@ -63,7 +64,7 @@
         <p class="cheer" id="cheer" role="status">Great job!</p>
       </div>
       <div class="row center" id="nextRow" hidden>
-        <button type="button" class="big" id="next">Next one ➜</button>
+        <button type="button" class="btn btn--primary btn--big" id="next">Next one ➜</button>
       </div>
     </section>
   </main>

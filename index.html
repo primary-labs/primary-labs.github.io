@@ -8,12 +8,13 @@
   <meta name="referrer" content="no-referrer">
   <title>Primary Labs</title>
   <meta name="description" content="Free reading and math activities for K–2 classrooms. Each lab practices one skill and runs in a web browser.">
-  <meta name="theme-color" content="#FFFFFF">
+  <meta name="theme-color" content="#FFF8EC">
   <meta property="og:title" content="Primary Labs">
   <meta property="og:description" content="Free reading and math activities for K–2 classrooms.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/andika-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="assets/primary-labs.css">
   <link rel="stylesheet" href="assets/site.css">
   <script src="assets/home.js" defer></script>
 </head>
@@ -21,7 +22,7 @@
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="site-header">
-    <div class="wrap header-inner">
+    <div class="header-inner">
       <a class="brand" href="./" aria-label="Primary Labs home">
         <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="13" fill="#1F2A44"/><path d="M18.5 10 H29.5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/><path d="M21 11 V20 L13 33.5 Q11 38 16 38 H32 Q37 38 35 33.5 L27 20 V11" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"/><path d="M16.6 29 H31.4 L33.6 33 Q34.6 35.5 31.8 35.5 H16.2 Q13.4 35.5 14.4 33 Z" fill="#FFC93C"/><circle cx="21" cy="24.5" r="2.2" fill="#E4572E"/><circle cx="27" cy="22" r="1.7" fill="#5AA9FF"/></svg>
         <span class="brand-name">Primary Labs</span>
@@ -55,7 +56,7 @@
         <div class="demo-side">
           <p class="demo-status" id="demoStatus" aria-live="polite">Change one sound to make a new word. This word is <strong>cat</strong>.</p>
           <ol class="demo-trail" id="demoTrail" aria-label="Words so far"><li aria-current="step">cat</li></ol>
-          <button type="button" class="btn btn--secondary" id="demoBtn" hidden>Change one sound</button>
+          <button type="button" class="btn btn--ghost" id="demoBtn" hidden>Change one sound</button>
           <p class="demo-key"><span class="key key--v">Red letters are vowels.</span> <span class="key key--c">Blue letters are consonants.</span></p>
         </div>
       </div>
@@ -84,15 +85,15 @@
       <div class="wrap">
         <h2 id="teachers-title">For teachers</h2>
         <div class="notes">
-          <div class="note">
+          <div class="tip">
             <h3>Use it on the classroom screen</h3>
             <p>The letters are big enough to read from the back of the room, and the buttons are easy to tap on a smartboard or tablet. It also works with a keyboard.</p>
           </div>
-          <div class="note">
+          <div class="tip">
             <h3>Record your own voice</h3>
             <p>Record each sound and word once, and the lab plays your recordings instead of the built-in audio.</p>
           </div>
-          <div class="note">
+          <div class="tip">
             <h3>Saved on your device</h3>
             <p>Recordings and custom chains are stored in your browser. We don't collect any data, and there are no ads.</p>
           </div>

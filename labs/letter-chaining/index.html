@@ -10,8 +10,9 @@
   <title>Letter Chains | Primary Labs</title>
   <meta name="description" content="Letter chaining for 1st grade: change one sound to make a new word. Short a, i, o and t, d, c, g, n. Aligned to NYS Next Generation ELA 1RF2b and 1RF2c.">
   <meta name="theme-color" content="#FFF8EC">
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="assets/fonts/andika-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../../assets/fonts/andika-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../assets/primary-labs.css">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -19,10 +20,11 @@
 
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="#home" aria-label="Primary Labs home">
+      <a class="brand" href="../../" aria-label="Primary Labs home">
         <span class="brand-mark" data-art="logo"></span>
         <span class="brand-name">Primary Labs</span>
       </a>
+      <a class="lab-title" href="#home">Letter Chains</a>
       <nav class="site-nav" aria-label="Activities">
         <a href="#sounds" data-nav="sounds">Sounds</a>
         <a href="#chains" data-nav="chains"><span class="nav-full">Letter Chains</span><span class="nav-short">Chains</span></a>
@@ -99,7 +101,7 @@
         <div class="chain-picker" id="chainPicker" role="group" aria-label="Pick a chain"></div>
       </div>
 
-      <div class="stage" id="chainStage">
+      <div class="stage panel" id="chainStage">
         <div class="stage-top">
           <div class="progress" id="chainProgress"></div>
           <button type="button" class="btn btn--listen" id="listenBtn"><span class="btn-icon" data-icon="speaker"></span><span>Hear the word</span></button>
@@ -153,7 +155,7 @@
         <p class="view-lede">Listen to the word. Where do you hear the sound: beginning, middle, or end?</p>
       </div>
 
-      <div class="stage spy-stage" id="spyStage">
+      <div class="stage panel spy-stage" id="spyStage">
         <div class="stars" id="spyStars" role="img" aria-label="Score"></div>
         <div class="spy-card">
           <button type="button" class="spy-picture" id="spyPicture" aria-label="Hear the word"></button>

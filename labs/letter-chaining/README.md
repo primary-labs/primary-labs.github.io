@@ -37,7 +37,7 @@ Recording needs a secure page: **https://** or **localhost**. Any static host wo
 
 ```
 index.html            page shell and static content
-css/styles.css        styles (Andika font: single-story a and g for early readers)
+css/styles.css        styles for this lab (shared look: ../../assets/primary-labs.css, see DESIGN.md)
 js/data.js            letters, words, sentences, chains, chain validation
 js/art.js             hand-drawn SVG pictures
 js/pictures.js        a picture for any word: drawing, emoji, word card, or made-up creature
@@ -45,7 +45,6 @@ js/voice-store.js     IndexedDB storage with expiry
 js/recorder.js        microphone recording, trimming, and WAV encoding
 js/sound.js           playback: teacher voice first, then the bundled clips
 js/app.js             views and activities
-assets/fonts/         Andika (SIL Open Font License)
 assets/audio/         clips for every letter sound, word, keyword, and sentence (see its README)
 tools/build-audio.js  wraps each clip in the .js file the page loads
 tools/voice/          makes the clips with the Kokoro voice model (see its README)

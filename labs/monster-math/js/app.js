@@ -51,8 +51,9 @@
     prob.appendChild(el('span', M.op === '+' ? 'nB' : 'nA', String(M.p.b)));
     prob.appendChild(el('span', 'op', '='));
     prob.appendChild(el('span', 'q' + (M.solved ? ' done' : ''), M.solved ? String(M.p.ans) : '?'));
-    var hear = el('button', 'iconbtn say', '🔊');
+    var hear = el('button', 'icon-btn say');
     hear.type = 'button';
+    hear.innerHTML = MM.Art.icons.speaker;
     hear.setAttribute('aria-label', 'Hear the problem');
     hear.onclick = function () { Sound.sfx.click(); Sound.sayAll([problemId(), instructionId()]); };
     prob.appendChild(hear);
@@ -215,13 +216,20 @@
     setTimeout(function () { Sound.say(problemId()); }, 150);
   };
 
+  // Sound effects toggle: a solid bell when on, an outline bell with a slash when off.
+  function showSfx(on) {
+    var b = $('#sfx');
+    b.setAttribute('aria-pressed', String(on));
+    b.classList.toggle('is-muted', !on);
+    b.innerHTML = on ? MM.Art.icons.bell : MM.Art.icons.bellOff;
+  }
   $('#sfx').onclick = function () {
     var on = !Sound.sfxOn();
     Sound.setSfx(on);
-    this.setAttribute('aria-pressed', String(on));
-    this.textContent = on ? '🔔' : '🔕';
+    showSfx(on);
     if (on) Sound.sfx.click();
   };
+  showSfx(Sound.sfxOn());
 
   newProblem();
 })();

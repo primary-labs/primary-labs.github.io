@@ -7,16 +7,21 @@ step, no package manager, and no framework.
 Consider students with disabilities and neurodivergent (ASD) learners. Clear, predictable
 screens and clean, consistent sounds matter more here than visual flair.
 
+Read `DESIGN.md` before changing how any page looks.
+
 ## Layout
 
 ```
-index.html, assets/        home page (site.css, home.js, Andika fonts, favicon)
+index.html                 home page
+assets/                    shared: primary-labs.css (design system), fonts, favicon; home's site.css, home.js
 labs/letter-chaining/      Letter Chains: grade 1 phonics (window.PL)
 labs/monster-math/         Monster Math: kindergarten add/subtract within 10 (window.MM)
+test/                      site-wide checks for every page
+DESIGN.md                  the design language
 ```
 
-Each lab is self-contained: its own `index.html`, `css/`, `js/`, `assets/` (including its own copy of
-the fonts), `tools/`, and a `README.md`. Read the lab's README before changing it, and keep it up to
+Each lab has its own `index.html`, `css/`, `js/`, `assets/`, `tools/`, and a `README.md`, and loads
+the shared stylesheet, fonts, and favicon from the root `assets/`. Read the lab's README before changing it, and keep it up to
 date when behavior, files, or commands change.
 
 ## Hard rules
@@ -27,7 +32,8 @@ These protect student and teacher privacy. Don't loosen them.
   `script-src 'self'`, `style-src 'self'`, no `unsafe-*`, no outside hosts.
 - **No inline code.** No `<script>` bodies, `<style>` tags, `style=` attributes, or `on*=` handlers in
   HTML, and no JS that writes them into markup. No `eval` or `new Function`.
-- **Nothing loads from another site.** Fonts, images, and audio are hosted in the repo. No `fetch`,
+- **Nothing loads from another site.** Fonts, images, and audio are hosted in the repo (fonts only
+  in `assets/fonts/`). No `fetch`,
   analytics, CDNs, or Google Fonts.
 - **Audio ships as `.js` files.** Because `connect-src 'none'` blocks downloads, each clip is wrapped
   in a script by the lab's `tools/build-audio.js`. After adding or replacing a `.wav`/`.mp3`, run
@@ -49,7 +55,8 @@ These protect student and teacher privacy. Don't loosen them.
 - Always write the name as **Primary Labs** in user-facing text.
 - Copy is short and plain, written for teachers and young kids.
 - Each lab names the NYS Next Generation standards it covers (README, page metadata, home page entry).
-- Use the Andika font (single-story a and g for early readers).
+- Follow `DESIGN.md`: Andika font, cream light theme, shared header and buttons, yellow = look here,
+  green = correct, drawn icons on controls.
 
 ## Voice and phonemes
 
@@ -71,21 +78,24 @@ command names (`uv pip install ...`), not `.venv/bin/pip`.
 
 ```sh
 python3 -m http.server 8000        # from the repo root, then open http://localhost:8000
-node --test labs/monster-math/test/
+node --test test/ labs/monster-math/test/
 ```
 
 - Microphone recording needs https or localhost.
 - Check changes in Safari on iPhone/iPad when touching audio: audio must start during a tap
   (`touchend`/`click`), and recordings are stored as ArrayBuffers, not Blobs, because iOS Safari
   can't reliably read Blobs back from IndexedDB.
-- Letter Chains has no automated tests; test it by hand in the browser.
+- `test/site.test.js` checks every page for the security and design rules. Letter Chains has no other
+  automated tests; test it by hand in the browser.
+- After a visual change, look at each page at 390px and desktop widths and Tab through it.
 
 ## Adding a lab
 
-1. Create `labs/<slug>/` with its own `index.html` (copy an existing lab's CSP), `css/`, `js/`,
-   `assets/fonts/`, favicon, and `README.md` covering standards, how it plays, running, and files.
-2. Add it to the `lab-list` in the root `index.html` (grade · subject · standards, one-line description).
-3. Consider copying `labs/monster-math/test/site-rules.test.js` to check the security rules.
+1. Create `labs/<slug>/` with its own `index.html` (copy an existing lab's CSP), `css/`, `js/`, and
+   a `README.md` covering standards, how it plays, running, and files.
+2. Style it with the "Styling a new lab" checklist in `DESIGN.md`.
+3. Add it to the `lab-list` in the root `index.html` (grade · subject · standards, one-line description).
+4. Run `node --test test/`; the site-wide checks pick up the new page automatically.
 
 ## Git
 

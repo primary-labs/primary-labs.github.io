@@ -1,124 +1,40 @@
 /* Primary Labs · Monster Math
-   One calm card, one problem at a time, huge tap targets. Nothing moves unless the child touches it. */
-
-@font-face {
-  font-family: 'Andika';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../assets/fonts/andika-400.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Andika';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../assets/fonts/andika-700.woff2') format('woff2');
-}
+   One calm card, one problem at a time, huge tap targets. Nothing moves unless the child touches it.
+   Loads after ../../assets/primary-labs.css, which has the fonts, colors, header, buttons, and the
+   panel. This file is only what is special to Monster Math. */
 
 :root {
-  color-scheme: light;
-  --bg: #E8F0FA;
-  --surface: #FFFFFF;
-  --soft: #D9E6F6;
-  --ink: #1E2940;
-  --muted: #56647F;
-  --line: #C3D3EA;
-  --accent: #F2701F;
-  --accent-ink: #FFFFFF;
-  --focus-ring: #2F74D8;
+  /* Content colors: each group of friends has its own color, and the red X crosses one out. */
   --cross: #E0313F;
-  --good: #1B9656;
   --monA: #27AE63;
   --monB: #8B66F2;
   --robA: #2D93DD;
   --robB: #EE8A1E;
-  --font: 'Andika', 'Century Gothic', 'Trebuchet MS', system-ui, sans-serif;
   --cs: clamp(46px, 13vw, 76px);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #131A2A; --surface: #1D263B; --soft: #263252; --ink: #EEF3FB; --muted: #A5B2CB; --line: #33415F;
-    --accent: #FF8740; --accent-ink: #1A1206; --focus-ring: #6AA6FF; --cross: #FF5A66; --good: #3CCB80;
-    --monA: #3BCB7A; --monB: #A487FF; --robA: #4FAEF2; --robB: #FFA23F;
-  }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #131A2A; --surface: #1D263B; --soft: #263252; --ink: #EEF3FB; --muted: #A5B2CB; --line: #33415F;
-  --accent: #FF8740; --accent-ink: #1A1206; --focus-ring: #6AA6FF; --cross: #FF5A66; --good: #3CCB80;
-  --monA: #3BCB7A; --monB: #A487FF; --robA: #4FAEF2; --robB: #FFA23F;
-}
 
-*, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg); color: var(--ink);
-  font-family: var(--font); font-size: 20px; line-height: 1.4;
-}
-p { margin: 0; }
-button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-button:disabled { cursor: default; }
-:focus-visible { outline: 4px solid var(--focus-ring); outline-offset: 3px; }
-[hidden] { display: none !important; }
-
-.skip-link {
-  position: absolute; left: 12px; top: -60px; z-index: 50;
-  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px;
-  text-decoration: none; font-weight: 700;
-}
-.skip-link:focus { top: 12px; }
+button { -webkit-tap-highlight-color: transparent; }
 
 /* ---------- header ---------- */
-.site-header { border-bottom: 2px solid var(--line); background: var(--surface); }
-.header-inner {
-  max-width: 1000px; margin: 0 auto;
-  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
-  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
-}
-.brand {
-  display: inline-flex; align-items: center; gap: 10px;
-  text-decoration: none; color: var(--ink); font-weight: 700; font-size: 18px;
-}
-.brand-mark { width: 36px; height: 36px; display: block; }
-.lab-title { margin: 0; font-size: 26px; font-weight: 700; line-height: 1; }
-.lab-title::before { content: '·'; color: var(--muted); margin-right: 16px; }
 .tools { display: flex; gap: 8px; align-items: center; margin-left: auto; }
 .stars {
-  font-weight: 700; font-size: 22px; background: var(--bg); border: 2px solid var(--line);
+  font-weight: 700; font-size: 22px; background: var(--surface); border: 2px solid var(--line);
   border-radius: 999px; padding: 6px 16px; font-variant-numeric: tabular-nums;
 }
-.iconbtn {
-  border: 2px solid var(--line); background: var(--surface); border-radius: 999px;
-  min-width: 52px; min-height: 52px; font-size: 22px; padding: 0 14px;
-}
-.iconbtn[aria-pressed="false"] { opacity: .55; }
 @media (max-width: 560px) {
-  .brand-name { display: none; }
-  .lab-title::before { display: none; }
-  .lab-title { font-size: 22px; }
   .stars { font-size: 18px; padding: 4px 12px; }
-  .iconbtn { min-width: 44px; min-height: 44px; font-size: 18px; padding: 0 10px; }
 }
 
-/* ---------- panel ---------- */
+/* ---------- activity ---------- */
 .wrap {
-  max-width: 1000px; margin: 0 auto;
+  width: 100%; max-width: var(--page); margin: 0 auto;
   padding: 16px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px));
 }
-.panel {
-  background: var(--surface); border-radius: 28px; border: 2px solid var(--line);
-  padding: clamp(16px, 3vw, 32px); display: grid; gap: 20px;
-}
-.panel:focus { outline: none; }
+.math { display: grid; gap: 20px; }
+.math:focus { outline: none; }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .row.center { justify-content: center; }
-.label { font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
-.seg { display: flex; flex-wrap: wrap; gap: 6px; background: var(--soft); padding: 5px; border-radius: 18px; }
-.seg button { border: 0; background: transparent; border-radius: 14px; padding: 8px 16px; min-height: 48px; font-weight: 700; color: var(--muted); }
-.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 2px 0 var(--line); }
+.label { font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); font-weight: 700; }
 .settings { display: flex; flex-wrap: wrap; gap: 12px 20px; }
 
 /* ---------- problem ---------- */
@@ -128,9 +44,9 @@ button:disabled { cursor: default; }
   font-weight: 700; font-size: clamp(56px, 13vw, 96px); line-height: 1;
   font-variant-numeric: tabular-nums;
 }
-.problem .op { color: var(--muted); }
-.problem .q { min-width: 1.1em; text-align: center; border-bottom: 6px solid var(--line); color: var(--muted); }
-.problem .q.done { color: var(--good); border-color: var(--good); }
+.problem .op { color: var(--ink-soft); }
+.problem .q { min-width: 1.1em; text-align: center; border-bottom: 6px solid var(--line); color: var(--ink-soft); }
+.problem .q.done { color: var(--green); border-color: var(--green); }
 .nA { color: var(--gA); }
 .nB { color: var(--gB); }
 .say { margin-left: 8px; align-self: center; }
@@ -148,7 +64,7 @@ button:disabled { cursor: default; }
 .group.B { --g: var(--gB); }
 .chars { display: grid; grid-template-columns: repeat(var(--cols, 5), var(--cs)); gap: 6px; }
 .gcount { font-weight: 700; font-size: 40px; line-height: 1; color: var(--g); }
-.bigop { font-weight: 700; font-size: 64px; color: var(--muted); line-height: 1; }
+.bigop { font-weight: 700; font-size: 64px; color: var(--ink-soft); line-height: 1; }
 
 .char { position: relative; width: var(--cs); height: var(--cs); border: 0; padding: 2px; background: transparent; border-radius: 16px; color: var(--g); }
 .char svg.art { width: 100%; height: 100%; display: block; transition: opacity .2s, transform .2s; }
@@ -158,14 +74,15 @@ button:disabled { cursor: default; }
 .char.crossed svg.art { opacity: .42; }
 .char .badge {
   position: absolute; top: -6px; right: -6px; min-width: 30px; height: 30px; border-radius: 999px;
-  background: var(--ink); color: var(--bg); font-weight: 700; font-size: 19px; line-height: 30px;
-  text-align: center; padding: 0 6px; animation: pop .25s ease-out;
+  background: var(--ink); color: #fff; font-weight: 700; font-size: 19px; line-height: 30px;
+  text-align: center; padding: 0 6px; animation: pop-in .25s ease-out;
 }
 .char.hop svg.art { animation: hop .4s ease-out; }
 .party .char:not(.crossed) svg.art { animation: dance .6s ease-in-out 3; }
 .party .char:nth-child(even):not(.crossed) svg.art { animation-delay: .15s; }
 
 /* ---------- answers ---------- */
+/* Big white keys with a pressable bottom edge, like the shared buttons. */
 .answers { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
 .ans {
   width: clamp(88px, 22vw, 116px); height: clamp(88px, 22vw, 116px); border-radius: 26px;
@@ -173,24 +90,19 @@ button:disabled { cursor: default; }
   font-weight: 700; font-size: clamp(48px, 11vw, 64px);
   box-shadow: 0 5px 0 var(--line); transition: transform .1s;
 }
+.ans:hover:not(:disabled) { border-color: var(--ink); }
 .ans:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 2px 0 var(--line); }
+.ans:disabled { cursor: default; }
 .ans.locked { opacity: .35; }
 .ans.wrong { opacity: .35; text-decoration: line-through; animation: shake .4s; }
-.ans.right { background: var(--good); border-color: var(--good); color: var(--surface); box-shadow: 0 5px 0 color-mix(in srgb, var(--good) 60%, #000); }
-.hint { text-align: center; color: var(--muted); font-size: 18px; }
+.ans.right { background: var(--green); border-color: var(--green); color: #fff; box-shadow: 0 5px 0 #145C27; }
+.hint { text-align: center; color: var(--ink-soft); font-size: 18px; }
 
-.big {
-  border: 0; border-radius: 999px; background: var(--accent); color: var(--accent-ink);
-  font-weight: 700; font-size: 28px; padding: 12px 36px; min-height: 64px;
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 60%, #000);
-}
-.big:active { transform: translateY(3px); box-shadow: 0 2px 0 color-mix(in srgb, var(--accent) 60%, #000); }
-.cheer { text-align: center; font-weight: 700; font-size: 34px; color: var(--good); animation: pop .35s ease-out; }
+.cheer { text-align: center; font-weight: 700; font-size: 34px; color: var(--green); animation: pop-in .35s ease-out; }
 
-@keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes pop-in { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-14px) scale(1.06); } }
 @keyframes dance { 0%, 100% { transform: rotate(0) translateY(0); } 25% { transform: rotate(-10deg) translateY(-8px); } 75% { transform: rotate(10deg) translateY(-8px); } }
-@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-}
+
+/* + and − in the Do buttons: text, so they follow the button's color when selected. */
+.sym { font-size: 1.25em; line-height: 1; margin-right: 2px; }
