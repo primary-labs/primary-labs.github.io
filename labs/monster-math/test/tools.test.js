@@ -53,6 +53,12 @@ test('the shipped clip list matches the clips on disk', () => {
   assert.deepEqual(list, onDisk, 'run node tools/build-audio.js');
 });
 
+test('every phrase has a clip', () => {
+  const have = new Set(run(path.join(__dirname, '..', 'assets', 'audio', 'index.js')).list);
+  const missing = Array.from(phrases(), (p) => p.id).filter((id) => !have.has(id)); // a plain array, not the sandbox's
+  assert.deepEqual(missing, [], 'make clips with tools/voice/monster_math.py (see tools/voice/README.md)');
+});
+
 test('list-phrases gives every id with its text', () => {
   const list = phrases();
   assert.ok(list.length > 300);

@@ -1,4 +1,5 @@
-"""Primary Labs · Letter Chains — automatic checks for generated clips.
+"""Primary Labs — automatic checks for generated clips. Letter Chains uses all of them; Monster Math
+uses the wav2vec2 recognizer, the level, pitch, voicing, formant and HNR measurements, and hygiene.
 
 Two kinds of checks, both local:
   - phoneme recognizers (ZIPA and wav2vec2-espeak) score how well a clip matches its target phones

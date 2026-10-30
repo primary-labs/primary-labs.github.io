@@ -2,10 +2,10 @@
 /* Lists every line Monster Math says, for whoever makes the clips (a voice tool or a person).
  *
  *   node tools/list-phrases.js              JSON: [{ "id": "problem-add-3-2", "text": "three plus two" }, ...]
- *   node tools/list-phrases.js --readme     rewrites assets/audio/README.md (the recording list)
+ *   node tools/list-phrases.js --readme     rewrites assets/audio/README.md (the clip list)
  *
- * Each clip is saved as assets/audio/phrases/<id>.wav (or .mp3), then wrapped with
- * node tools/build-audio.js.
+ * The site's tools/voice/monster_math.py reads the JSON. Each clip is saved as
+ * assets/audio/phrases/<id>.mp3 (or .wav), then wrapped with node tools/build-audio.js.
  */
 'use strict';
 
@@ -24,21 +24,23 @@ function readme(list) {
   return [
     '# Audio clips',
     '',
-    'Every line Monster Math says can play from a clip in `phrases/`. Lines without a clip use the',
-    "device's built-in voice, which sounds different on every computer, so the goal is a clip for all of them.",
+    'Every line Monster Math says plays from a clip in `phrases/`. A line without a clip falls back to the',
+    "device's built-in voice, which sounds different on every computer, so every line should have one.",
     '',
-    'There are no clips yet. The default voice will come from the same open-source voice tool as',
-    'Letter Chains. Do not use macOS voices (Samantha, Daniel and the rest): Apple allows them for',
-    'personal use only.',
+    '**These clips are computer-generated** with the "Heart" voice of Kokoro-82M, an open-source voice',
+    "model, by the site's `tools/voice/monster_math.py`. Each one was checked automatically: one",
+    'recognizer had to hear exactly the words below and a second one exactly their sounds, and further',
+    'checks look for glitches. `tools/voice/README.md` explains the method. Do not use macOS voices',
+    '(Samantha, Daniel and the rest): Apple allows them for personal use only.',
     '',
-    '## Adding clips',
+    '## Replacing a clip',
     '',
-    '1. Save each clip as `phrases/<file>.wav` or `.mp3`, using the names below.',
+    '1. Save it as `phrases/<file>.mp3` or `.wav`, using the names below. If both exist, the MP3 is used,',
+    '   so delete the old MP3 when replacing it with a WAV.',
     '2. Run `node tools/build-audio.js`. It wraps each clip in a `.js` file and updates `index.js`.',
     '3. Only the `.js` files need to be deployed.',
     '',
-    'Trim silence at the start and end, and keep levels even between clips. MP3 keeps the folder',
-    'small (about 350 clips).',
+    'Trim silence at the start and end, and keep levels even with the other clips.',
     '',
     'Regenerate this list with `node tools/list-phrases.js --readme`.',
     '',

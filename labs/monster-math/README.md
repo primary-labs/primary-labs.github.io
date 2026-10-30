@@ -25,13 +25,14 @@ No build step and no dependencies. Serve the site root (`python3 -m http.server 
 
 ## Voice
 
-Every spoken line has an id in `js/phrases.js` (for example `problem-add-3-2` → "three plus two"). The page plays the clip for that id when there is one, and the device's built-in voice when there isn't.
+Every spoken line has an id in `js/phrases.js` (for example `problem-add-3-2` → "three plus two"), and every line plays from a clip in `assets/audio/phrases/`. The page doesn't rely on the device's built-in voice, so it sounds the same on every computer. That voice is used only if a clip fails to load, or for a new line that has no clip yet.
 
-**There are no clips yet**, so it uses the device voice for now. The default voice will come from the same open-source voice tool as Letter Chains once that's ready. Don't use macOS voices: Apple allows them for personal use only.
+**The clips are computer-generated**, with the "Heart" voice of Kokoro-82M, the same open-source voice model (Apache-2.0) as Letter Chains. They were made ahead of time, and each one was checked automatically: one recognizer had to hear exactly the words of its line, a second one exactly its sounds (so "six" can't sound like "sex"), and further checks look for glitches such as a stray pause or the sound cutting out. No AI runs in the browser. `../../tools/voice/README.md` explains how. Don't use macOS voices: Apple allows them for personal use only.
 
-- `node tools/list-phrases.js` prints every id and its text as JSON, for a voice tool.
-- `node tools/list-phrases.js --readme` rewrites `assets/audio/README.md`, the recording list.
-- Save clips as `assets/audio/phrases/<id>.wav` or `.mp3`, then run `node tools/build-audio.js`. It wraps each clip in a `.js` file (the security policy, `connect-src 'none'`, stops scripts from downloading files) and updates `assets/audio/index.js`, the list of clips that exist.
+- After adding or changing a line in `js/phrases.js`, make its clip with `../../tools/voice/monster_math.py --only <id>` in the folder of a full run (see its README), copy the MP3 into `assets/audio/phrases/`, and run `node tools/build-audio.js`. The tests fail until every line has a clip.
+- `node tools/list-phrases.js` prints every id and its text as JSON. The voice tool reads this.
+- `node tools/list-phrases.js --readme` rewrites `assets/audio/README.md`, the clip list.
+- `node tools/build-audio.js` wraps each clip in a `.js` file (the security policy, `connect-src 'none'`, stops scripts from downloading files) and updates `assets/audio/index.js`, the list of clips that exist. Only the `.js` files need to be deployed.
 
 ## Tests
 
@@ -39,7 +40,7 @@ Every spoken line has an id in `js/phrases.js` (for example `problem-add-3-2` �
 node --test labs/monster-math/test/
 ```
 
-They check problem generation (ranges, answer choices, no repeats), that every line has a phrase, the audio tools, and the control icons. The site's security and design rules are checked for every page by `node --test test/` at the repo root.
+They check problem generation (ranges, answer choices, no repeats), that every line has a phrase and every phrase has a clip, the audio tools, and the control icons. The site's security and design rules are checked for every page by `node --test test/` at the repo root.
 
 ## Files
 
@@ -51,7 +52,7 @@ js/problems.js         problems and answer choices
 js/sound.js            clip player, device-voice fallback, sound effects
 js/art.js              monster and robot drawings, the red X, control icons
 js/app.js              the activity
-assets/audio/          clips (none yet), index.js, and the recording list
+assets/audio/          clips (MP3, Heart voice), index.js, and the clip list
 tools/                 build-audio.js, list-phrases.js
 test/                  Node tests
 ```

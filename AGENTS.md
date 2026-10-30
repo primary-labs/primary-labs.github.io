@@ -66,10 +66,11 @@ The labs teach phonics, so audio must carry exactly the right sounds:
 - Letter sounds have no added "uh" (/t/, not "tuh"). C and g are always hard. Short o is the "ah" of
   dot, so dog and dot share a vowel. Nonsense words follow the same rules ("cit" is /kɪt/).
 - Playback order: teacher recording, then bundled clip, then the device voice as a last resort.
-- Default clips are made with Kokoro-82M ("Heart" voice, `af_heart`) from exact phoneme strings and
-  checked automatically. See `tools/voice/README.md`.
+- Default clips for both labs are made with Kokoro-82M ("Heart" voice, `af_heart`) and checked
+  automatically: Letter Chains from exact phoneme strings, Monster Math from the dictionary with
+  word, sound and glitch checks. A person listens only to the clips the checks can't clear. See
+  `tools/voice/README.md`.
 - Don't use macOS voices (Samantha etc.) for shipped audio: Apple allows them for personal use only.
-- Monster Math has no clips yet; it uses the device voice until they're generated.
 
 Python tooling lives in `tools/voice/` (Python 3.12 venv in `.venv/`, ignored by git). On this
 machine `pip`/`uv` are wrapped by a malware scanner: activate the venv and call the bare command
@@ -80,6 +81,7 @@ names (`pip install ...`, `uv pip install ...`), not `.venv/bin/pip`.
 ```sh
 python3 -m http.server 8000        # from the repo root, then open http://localhost:8000
 node --test test/ labs/monster-math/test/
+cd tools/voice && .venv/bin/python -m unittest   # voice tool tests (needs its venv)
 ```
 
 - Microphone recording needs https or localhost.
