@@ -16,6 +16,7 @@ index.html                 home page
 assets/                    shared: primary-labs.css (design system), fonts, favicon; home's site.css, home.js
 labs/letter-chaining/      Letter Chains: grade 1 phonics (window.PL)
 labs/monster-math/         Monster Math: kindergarten add/subtract within 10 (window.MM)
+tools/voice/               makes every lab's default voice clips with Kokoro (Python, build time only)
 test/                      site-wide checks for every page
 DESIGN.md                  the design language
 ```
@@ -66,13 +67,13 @@ The labs teach phonics, so audio must carry exactly the right sounds:
   dot, so dog and dot share a vowel. Nonsense words follow the same rules ("cit" is /kɪt/).
 - Playback order: teacher recording, then bundled clip, then the device voice as a last resort.
 - Default clips are made with Kokoro-82M ("Heart" voice, `af_heart`) from exact phoneme strings and
-  checked automatically. See `labs/letter-chaining/tools/voice/README.md`.
+  checked automatically. See `tools/voice/README.md`.
 - Don't use macOS voices (Samantha etc.) for shipped audio: Apple allows them for personal use only.
 - Monster Math has no clips yet; it uses the device voice until they're generated.
 
-Python tooling lives in `labs/letter-chaining/tools/voice/` (Python 3.12 venv in `.venv/`, ignored by
-git). On this machine `pip`/`uv` are wrapped by a malware scanner: activate the venv and call the bare
-command names (`uv pip install ...`), not `.venv/bin/pip`.
+Python tooling lives in `tools/voice/` (Python 3.12 venv in `.venv/`, ignored by git). On this
+machine `pip`/`uv` are wrapped by a malware scanner: activate the venv and call the bare command
+names (`pip install ...`, `uv pip install ...`), not `.venv/bin/pip`.
 
 ## Running and testing
 

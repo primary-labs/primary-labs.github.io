@@ -82,11 +82,3 @@ MISAKI_TO_IPA = {'A': 'eɪ', 'I': 'aɪ', 'W': 'aʊ', 'Y': 'ɔɪ', 'O': 'oʊ', '�
 
 def ipa_text(phones):
     return '/' + ''.join(phones) + '/'
-
-
-def check_symbols(ps, vocab):
-    """Kokoro silently drops any symbol it doesn't know (a keyboard g just vanishes), so refuse them."""
-    bad = sorted({ch for ch in ps if ch not in vocab})
-    if bad:
-        names = ', '.join('%r (U+%04X)' % (c, ord(c)) for c in bad)
-        raise ValueError('Kokoro does not know these symbols in %r: %s' % (ps, names))

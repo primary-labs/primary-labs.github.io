@@ -1,14 +1,36 @@
-# Default voice pack (Kokoro)
+# Default voice (Kokoro)
 
-Makes the Letter Chains audio clips with Kokoro-82M, an open-source voice model (Apache-2.0 code
-and weights, no limits on the audio it makes). It runs on a Mac at build time. Nothing here ships
-to the browser: the page only plays the finished files, so no AI runs in the classroom.
+Makes the default audio clips for every lab with Kokoro-82M, an open-source voice model (Apache-2.0
+code and weights, no limits on the audio it makes). Letter Chains uses its "Heart" voice (`af_heart`).
+It runs on a Mac at build time. Nothing here ships to the browser: the pages only play the finished
+files, so no AI runs in the classroom.
 
 Teacher recordings still win. These clips replace the device's built-in voice, which differs by
 computer and can't say a letter sound on its own, and the macOS "Samantha" clips used during
 development, which Apple's license does not allow on a public site.
 
-## Why phonemes, not spelling
+```
+engine.py              the Kokoro model, and the trim, level and save helpers both labs use
+qa.py                  automatic checks: phoneme recognizers and acoustic measurements
+letter_chains.py       Letter Chains: letter sounds, words, keywords, sentences
+phonemes.py            Letter Chains' exact phonemes
+requirements.txt       pinned versions
+```
+
+## Set up
+
+```sh
+# Python 3.12 virtual environment (install through your package scanner if you use one)
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+The first run downloads the Kokoro weights (about 330 MB) from Hugging Face.
+
+## Letter Chains
+
+### Why phonemes, not spelling
 
 Words, keywords and letter sounds are made from exact phoneme strings (`phonemes.py`), never from
 spelling:
@@ -29,8 +51,11 @@ spelling:
     lengthened with Praat's PSOLA into a short version (380 ms for vowels, 320 ms for /n/, plus a
     little silence at each end) and a held 700 ms version (not used by the lab yet), with a gentle
     one-semitone pitch fall. Kokoro can't hold a sound itself: stretched timings go silent.
+  - Praat's PSOLA gives slightly different audio each time, so letter sounds (and the stops, whose
+    level follows the vowels) never come out byte for byte the same twice. Words, keywords and
+    sentences do.
 
-## Checks
+### Checks
 
 Each word is said seven ways: alone; with a full stop or "!"; with a full stop, a little slower and a
 little faster; and, as fallbacks, cut out of "The word is ..." (said straight on, or after a full
@@ -50,36 +75,34 @@ problem when both agree. Sentences are checked only at their edges. Clips with a
 marked `check` in `manifest.json`, with the reasons. Each voice's manifest also lists which vowel
 comparisons its references could not support. A person still listens to every clip before it ships.
 
-## Run it
+### Run it
 
 ```sh
-# Python 3.12 virtual environment (install through your package scanner if you use one)
-uv venv --python 3.12 .venv
-uv pip install --python .venv/bin/python -r requirements.txt
-
 # Optional recognizer models for the checks
 #   ZIPA-CR small:   https://huggingface.co/anyspeech/zipa-small-crctc-500k  (CC BY 4.0)
 #   wav2vec2-espeak: https://huggingface.co/facebook/wav2vec2-lv-60-espeak-cv-ft  (Apache-2.0)
 
-.venv/bin/python generate.py --out /tmp/voice-pack \
+python letter_chains.py --out /tmp/voice-pack \
   --voices af_heart,af_nicole,am_michael \
   --zipa path/to/zipa-small-crctc-500k --w2v2 path/to/wav2vec2-lv-60-espeak-cv-ft
 ```
 
-The first run downloads the Kokoro weights (about 330 MB) from Hugging Face. Content comes straight
-from `js/data.js`, so new words and sentences are picked up automatically; letter sounds and
-keywords are listed in `phonemes.py`.
+Content comes straight from `labs/letter-chaining/js/data.js`, so new words and sentences are picked
+up automatically; letter sounds and keywords are listed in `phonemes.py`.
 
-Output for each voice: `words/`, `keywords/`, `sentences/` (same names as `assets/audio/`),
+Output for each voice: `words/`, `keywords/`, `sentences/` (same names as the lab's `assets/audio/`),
 `sounds/<letter>.wav` and `sounds/<letter>-long.wav`, and `manifest.json`. Every take that was
 tried is kept under `takes/` for comparison.
 
-## Shipping a voice
+### Shipping a voice
 
 The lab ships `af_heart` ("Heart"). To update it, copy the voice's `words/`, `keywords/` and
-`sentences/` WAVs over the files in `assets/audio/`, and its `sounds/<letter>.wav` files (not the
-`-long` ones, which the page doesn't use yet) into `assets/audio/sounds/`. Then run
-`node tools/build-audio.js`. Listen to every clip marked `check` in `manifest.json` first.
+`sentences/` WAVs over the files in `labs/letter-chaining/assets/audio/`, and its
+`sounds/<letter>.wav` files (not the `-long` ones, which the page doesn't use yet) into
+`assets/audio/sounds/`. Then run `node tools/build-audio.js` from the lab's folder. Listen to every
+clip marked `check` in `manifest.json` first.
+
+## Telling schools
 
 Tell schools the default voice is computer-generated. Kokoro's model card notes that part of its
 training audio was made by commercial text-to-speech systems.

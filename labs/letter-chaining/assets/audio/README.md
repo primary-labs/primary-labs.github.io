@@ -5,7 +5,7 @@ folder. The page never uses the computer's built-in voice when a file is here, s
 on every computer and browser. When a teacher records a letter sound or word in Teacher Corner, their recording plays instead.
 
 **These files are computer-generated** with the "Heart" voice of Kokoro-82M, an open-source voice
-model, by `tools/voice/generate.py`. Words, keywords and letter sounds were made from exact phonemes,
+model, by the site's `tools/voice/letter_chains.py`. Words, keywords and letter sounds were made from exact phonemes,
 and every take was checked automatically for phoneme errors before the best one was kept. `tools/voice/README.md` explains
 the method.
 

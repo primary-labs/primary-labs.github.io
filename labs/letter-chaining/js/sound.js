@@ -119,7 +119,7 @@
 
   /* ---------- bundled clips (assets/audio/) ----------
      Every letter sound, word, keyword picture, and sentence ships as a clip in the page's own
-     computer-generated voice (see tools/voice/), so the page sounds the same on every computer
+     computer-generated voice (see ../../tools/voice/), so the page sounds the same on every computer
      and never depends on the device voice. Device voices differ by system, can't say a letter
      sound on its own, and on some Macs they pop loudly each time they start.
      Each clip is wrapped in a .js file (see tools/build-audio.js), because the page's security

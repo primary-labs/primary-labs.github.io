@@ -47,8 +47,9 @@ js/sound.js           playback: teacher voice first, then the bundled clips
 js/app.js             views and activities
 assets/audio/         clips for every letter sound, word, keyword, and sentence (see its README)
 tools/build-audio.js  wraps each clip in the .js file the page loads
-tools/voice/          makes the clips with the Kokoro voice model (see its README)
 ```
+
+The clips are made by the site's voice tool in `../../tools/voice/` (see its README).
 
 ## Editing content
 
@@ -62,8 +63,8 @@ tools/voice/          makes the clips with the Kokoro voice model (see its READM
 
 Every letter sound, word, keyword picture (apple, igloo…), and sentence plays from a clip in `assets/audio/`. The page doesn't rely on the computer's built-in voice, so it sounds the same in Chrome, Edge, Firefox, and Safari on any system. Built-in voices also differ by computer, can't say a letter sound on its own, and on some Macs they pop loudly each time they start. The built-in voice is used only if a clip fails to load, and for teacher-made words that have no clip.
 
-**The clips are computer-generated**, with the "Heart" voice of Kokoro-82M, an open-source voice model (Apache-2.0, no limits on the audio it makes). They were made ahead of time from exact phonemes, so "cit" is always /kĭt/ and every short o is the "ah" in dot. No AI runs in the browser. When a teacher records a letter sound or word, their recording plays instead. `tools/voice/README.md` explains how the clips were made and checked, and `assets/audio/README.md` lists every clip.
+**The clips are computer-generated**, with the "Heart" voice of Kokoro-82M, an open-source voice model (Apache-2.0, no limits on the audio it makes). They were made ahead of time from exact phonemes, so "cit" is always /kĭt/ and every short o is the "ah" in dot. No AI runs in the browser. When a teacher records a letter sound or word, their recording plays instead. `../../tools/voice/README.md` explains how the clips were made and checked, and `assets/audio/README.md` lists every clip.
 
-- Remake the clips: see `tools/voice/README.md`, then copy the chosen voice's files in and run `node tools/build-audio.js`.
+- Remake the clips: see `../../tools/voice/README.md`, then copy the chosen voice's files in and run `node tools/build-audio.js`.
 - Replace one clip: save a `.wav` or `.mp3` with the same name, then run `node tools/build-audio.js`.
 - Each clip ships as a small `.js` file next to the audio, because the security policy (`connect-src 'none'`) stops scripts from downloading files. Only the `.js` files need to be deployed.
