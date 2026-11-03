@@ -15,7 +15,7 @@ Read `DESIGN.md` before changing how any page looks.
 index.html                 home page
 assets/                    shared: primary-labs.css (design system), fonts, favicon; home's site.css, home.js, lab-filter.js
 labs/letter-chaining/      Letter Chains: grade 1 phonics (window.PL)
-labs/monster-math/         Monster Math: kindergarten add/subtract within 10 (window.MM)
+labs/monster-math/         Monster Math: K–1 add/subtract within 10 (window.MM)
 tools/voice/               makes every lab's default voice clips with Kokoro (Python, build time only)
 test/                      site-wide checks for every page
 DESIGN.md                  the design language

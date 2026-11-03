@@ -1,10 +1,11 @@
 # Monster Math · Primary Labs
 
-Kindergarten adding and subtracting within 10, by counting monsters or robots.
+Adding and subtracting within 10 by counting monsters or robots, for kindergarten and grade 1.
 It is aligned to NYS Next Generation Mathematics standards:
 
 - **NY-K.OA.2a**: Add and subtract within 10.
 - **NY-K.CC.4**: Understand the relationship between numbers and quantities up to 20; connect counting to cardinality.
+- **NY-1.OA.5**: Relate counting to addition and subtraction.
 
 ## How it plays
 
