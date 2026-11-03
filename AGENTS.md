@@ -13,7 +13,7 @@ Read `DESIGN.md` before changing how any page looks.
 
 ```
 index.html                 home page
-assets/                    shared: primary-labs.css (design system), fonts, favicon; home's site.css, home.js
+assets/                    shared: primary-labs.css (design system), fonts, favicon; home's site.css, home.js, lab-filter.js
 labs/letter-chaining/      Letter Chains: grade 1 phonics (window.PL)
 labs/monster-math/         Monster Math: kindergarten add/subtract within 10 (window.MM)
 tools/voice/               makes every lab's default voice clips with Kokoro (Python, build time only)
@@ -97,7 +97,9 @@ cd tools/voice && .venv/bin/python -m unittest   # voice tool tests (needs its v
 1. Create `labs/<slug>/` with its own `index.html` (copy an existing lab's CSP), `css/`, `js/`, and
    a `README.md` covering standards, how it plays, running, and files.
 2. Style it with the "Styling a new lab" checklist in `DESIGN.md`.
-3. Add it to the `lab-list` in the root `index.html` (grade · subject · standards, one-line description).
+3. Add it to the `lab-list` in the root `index.html` (grade · subject · standards, one-line description),
+   with `data-grade` (`k`, `1`, `2`) and `data-subject` (`reading`, `math`) for the home page filter.
+   A new subject also needs a button in the filter.
 4. Run `node --test test/`; the site-wide checks pick up the new page automatically.
 
 ## Git

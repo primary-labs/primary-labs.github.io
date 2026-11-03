@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Static page with one small local script. No outside requests. -->
+  <!-- Static page with two small local scripts. No outside requests. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
   <meta name="referrer" content="no-referrer">
   <title>Primary Labs</title>
@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="assets/primary-labs.css">
   <link rel="stylesheet" href="assets/site.css">
   <script src="assets/home.js" defer></script>
+  <script src="assets/lab-filter.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -66,13 +67,39 @@
       <div class="wrap">
         <h2 id="labs-title">Labs</h2>
 
-        <ul class="lab-list">
-          <li class="lab-item">
+        <!-- Filters, shown by lab-filter.js. Each lab-item lists its grades and subjects in
+             data-grade and data-subject, separated by spaces if there is more than one. -->
+        <div class="lab-filters" id="labFilters" hidden>
+          <div class="filter">
+            <span class="filter-label" id="gradeLabel">Grade</span>
+            <div class="segmented" role="group" aria-labelledby="gradeLabel" data-filter="grade">
+              <button type="button" value="" aria-pressed="true">All</button>
+              <button type="button" value="k" aria-pressed="false">K</button>
+              <button type="button" value="1" aria-pressed="false">1</button>
+              <button type="button" value="2" aria-pressed="false">2</button>
+            </div>
+          </div>
+          <div class="filter">
+            <span class="filter-label" id="subjectLabel">Subject</span>
+            <div class="segmented" role="group" aria-labelledby="subjectLabel" data-filter="subject">
+              <button type="button" value="" aria-pressed="true">All</button>
+              <button type="button" value="reading" aria-pressed="false">Reading</button>
+              <button type="button" value="math" aria-pressed="false">Math</button>
+            </div>
+          </div>
+        </div>
+        <div class="lab-status" id="labStatus" hidden>
+          <p id="labCount" aria-live="polite"></p>
+          <button type="button" class="btn btn--ghost" id="labReset" hidden>Show all labs</button>
+        </div>
+
+        <ul class="lab-list" id="labList">
+          <li class="lab-item" data-grade="k" data-subject="math">
             <h3><a class="lab-link" href="labs/monster-math/">Monster Math</a></h3>
             <p class="lab-meta">Kindergarten · Math · NY-K.OA.2a, NY-K.CC.4</p>
             <p class="lab-desc">Count monsters or robots to add and subtract within 10.</p>
           </li>
-          <li class="lab-item">
+          <li class="lab-item" data-grade="1" data-subject="reading">
             <h3><a class="lab-link" href="labs/letter-chaining/">Letter Chains</a></h3>
             <p class="lab-meta">Grade 1 · Reading · NYS 1RF2b, 1RF2c</p>
             <p class="lab-desc">Change one sound to make a new word, like cat to cot to dot.</p>
@@ -87,11 +114,11 @@
         <div class="notes">
           <div class="tip">
             <h3>Use it on the classroom screen</h3>
-            <p>The letters are big enough to read from the back of the room, and the buttons are easy to tap on a smartboard or tablet. It also works with a keyboard.</p>
+            <p>The letters and pictures are big enough to see from the back of the room, and the buttons are easy to tap on a smartboard or tablet. It also works with a keyboard.</p>
           </div>
           <div class="tip">
             <h3>Record your own voice</h3>
-            <p>Record each sound and word once, and the lab plays your recordings instead of the built-in audio.</p>
+            <p>In Letter Chains, record each sound and word once, and the lab plays your recordings instead of the built-in audio.</p>
           </div>
           <div class="tip">
             <h3>Saved on your device</h3>
