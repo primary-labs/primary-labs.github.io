@@ -83,6 +83,9 @@ section[id] { scroll-margin-top: 88px; }
 }
 
 .demo-side { display: grid; gap: 20px; justify-items: start; max-width: 28em; }
+.demo-from { font-size: var(--t-small); color: var(--ink-soft); }
+/* Sits right above the status line it introduces. */
+.demo-from + .demo-status { margin-top: -12px; }
 .demo-status { font-size: var(--t-lede); line-height: 1.4; min-height: 2.8em; }
 .demo-trail { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 4px; color: var(--ink-soft); }
 .demo-trail li + li::before { content: "to"; margin-right: 4px; font-size: var(--t-small); color: var(--ink-soft); }
