@@ -16,6 +16,7 @@ index.html                 home page
 assets/                    shared: primary-labs.css (design system), fonts, favicon; home's site.css, home.js, lab-filter.js
 labs/letter-chaining/      Letter Chains: grade 1 phonics (window.PL)
 labs/monster-math/         Monster Math: K–1 add/subtract within 10 (window.MM)
+labs/story-puzzles/        Story Puzzles: grade 1 decodable stories with picture pieces (window.SP)
 tools/voice/               makes every lab's default voice clips with Kokoro (Python, build time only)
 test/                      site-wide checks for every page
 DESIGN.md                  the design language
@@ -46,7 +47,7 @@ These protect student and teacher privacy. Don't loosen them.
 ## Code style
 
 - Plain browser JavaScript: one IIFE per file with `'use strict'`, attached to the lab's global
-  namespace (`window.PL`, `window.MM`). Scripts load in order through `<script src>` tags. No ES
+  namespace (`window.PL`, `window.MM`, `window.SP`). Scripts load in order through `<script src>` tags. No ES
   modules, bundlers, or dependencies.
 - Node is used only for tools and tests (`node:test`, no npm packages).
 - Match the existing file's style. Keep comments short and plain.
@@ -66,9 +67,9 @@ The labs teach phonics, so audio must carry exactly the right sounds:
 - Letter sounds have no added "uh" (/t/, not "tuh"). C and g are always hard. Short o is the "ah" of
   dot, so dog and dot share a vowel. Nonsense words follow the same rules ("cit" is /kɪt/).
 - Playback order: teacher recording, then bundled clip, then the device voice as a last resort.
-- Default clips for both labs are made with Kokoro-82M ("Heart" voice, `af_heart`) and checked
-  automatically: Letter Chains from exact phoneme strings, Monster Math from the dictionary with
-  word, sound and glitch checks. A person listens only to the clips the checks can't clear. See
+- Default clips for every lab are made with Kokoro-82M ("Heart" voice, `af_heart`) and checked
+  automatically: Letter Chains from exact phoneme strings, Monster Math and Story Puzzles from the
+  dictionary with word, sound and glitch checks (Story Puzzles forces short o to "ah"). A person listens only to the clips the checks can't clear. See
   `tools/voice/README.md`.
 - Don't use macOS voices (Samantha etc.) for shipped audio: Apple allows them for personal use only.
 
@@ -80,7 +81,7 @@ names (`pip install ...`, `uv pip install ...`), not `.venv/bin/pip`.
 
 ```sh
 python3 -m http.server 8000        # from the repo root, then open http://localhost:8000
-node --test test/ labs/monster-math/test/
+node --test test/ labs/monster-math/test/ labs/story-puzzles/test/
 cd tools/voice && .venv/bin/python -m unittest   # voice tool tests (needs its venv)
 ```
 

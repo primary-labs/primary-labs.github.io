@@ -1,0 +1,234 @@
+/* Primary Labs · Story Puzzles
+   A story card with four empty puzzle spots under it, and a tray of picture pieces beside it.
+   Nothing moves unless the child taps something. Yellow lights up the sentence being read,
+   green marks a piece that fits. Loads after ../../assets/primary-labs.css, which has the fonts,
+   colors, header, buttons, and the panel. This file is only what is special to Story Puzzles. */
+
+:root {
+  /* Phones: sizes come from the width (four spots across the story card, three tray pieces
+     across), and the page scrolls. */
+  --slot: clamp(62px, calc((100vw - 112px) / 4), 140px);
+  --piece: clamp(80px, calc((100vw - 124px) / 3), 140px);
+  --story-size: clamp(22px, 4vw, 30px);
+  /* The screen's height without the browser's bars, for fitting the activity on tablets and
+     boards. svh doesn't change as a toolbar slides away, so nothing resizes while scrolling. */
+  --screen: 100vh;
+}
+@supports (height: 100svh) { :root { --screen: 100svh; } }
+
+button { -webkit-tap-highlight-color: transparent; }
+
+/* ---------- header ---------- */
+.header-tools { display: flex; gap: 8px; align-items: center; margin-left: auto; position: relative; }
+
+/* ---------- page ---------- */
+.wrap {
+  width: 100%; max-width: var(--page); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px));
+}
+
+/* ---------- story list: a "Stories" button in the header opens it over the page ---------- */
+/* The list lines up with the right edge of the header tools, so it always fits on the screen. */
+.stories-btn { padding-inline: 14px 18px; }
+@media (max-width: 480px) {
+  /* Small phones: the book alone, so the header stays on one row. The word is still read out. */
+  .stories-btn { padding-inline: 12px; }
+  .stories-btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+.stories-panel {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 30; width: min(560px, calc(100vw - 32px));
+  display: grid; gap: 10px; padding: 18px 20px 20px;
+  background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.stories-panel[hidden] { display: none; }
+.stories-title { font-size: 20px; }
+.picker { display: grid; gap: 10px; }
+.picker-group { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; }
+.picker-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.picker-label {
+  font-size: 14px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft);
+}
+.picker .pill { padding-left: 14px; }
+.pill-check { display: inline-grid; place-items: center; width: 22px; height: 22px; margin-left: -2px; color: var(--green); }
+.pill-check svg { width: 100%; height: 100%; }
+.picker .pill[aria-pressed="true"] .pill-check { color: #FFFFFF; }
+
+/* ---------- activity ---------- */
+.puzzle { display: grid; gap: 18px; scroll-margin-top: 80px; } /* clear of the sticky header */
+.puzzle:focus { outline: none; }
+.puzzle-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; }
+.prompt-row { display: flex; align-items: center; gap: 12px; }
+.prompt { font-size: clamp(19px, 2.2vw, 23px); font-weight: 700; text-wrap: balance; }
+
+.board { display: grid; gap: 24px; align-items: start; }
+
+/* Tablets and boards: the whole activity fits on one screen, so a child sees the story, the spots,
+   every piece and what happened, all at once. --board is the height left for the story card, the
+   spots and the tray once the header, the directions and the status line are counted. The sizes
+   follow from it, and the story text gets room first, leaving at least 100px spots (the 185px and
+   192px below). Story side = 70px (63px on tablets) + 10.275 × story size + 1.22 × spot, since a
+   piece is 1.22 times as tall as it is wide. */
+@media (min-width: 721px) {
+  .puzzle { padding-block: 24px; gap: 14px; }
+  .puzzle-top { flex-wrap: nowrap; }
+  .prompt-row { flex: 1 1 auto; min-width: 0; }
+  .puzzle-top > .btn { flex: none; }
+}
+@media (min-width: 721px) and (max-width: 959px) {
+  /* Upright tablets: one column, with all six pieces in one row under the spots. */
+  :root {
+    --board: calc(var(--screen) - 255px);
+    --piece: min(140px, calc((83vw - 32px) / 6));
+    --story-size: clamp(22px, min(4vw, calc((var(--board) - 24px - 1.22 * var(--piece) - 185px) / 10.275)), 30px);
+    --slot: clamp(84px, calc((var(--board) - 24px - 1.22 * var(--piece) - 63px - 10.275 * var(--story-size)) / 1.22), 140px);
+  }
+}
+@media (min-width: 960px) {
+  /* Wide screens: the tray sits beside the story, two pieces across and three down. */
+  :root {
+    --board: calc(var(--screen) - 245px);
+    --piece: clamp(92px, calc((var(--board) - 28px) / 3.66), 140px);
+    --story-size: clamp(22px, min(2.7vw, calc((var(--board) - 192px) / 10.275)), 30px);
+    --slot: clamp(84px, min(calc((min(100vw, 1120px) - 500px) / 4), calc((var(--board) - 70px - 10.275 * var(--story-size)) / 1.22)), 140px);
+  }
+  .board { grid-template-columns: minmax(0, 1fr) auto; gap: 32px; }
+}
+
+/* ---------- story card ---------- */
+.story-card {
+  border: 3px solid var(--line); border-radius: var(--radius); background: var(--surface);
+  padding: clamp(16px, 2.5vw, 26px) clamp(16px, 3vw, 30px) calc(var(--slot) * 0.2 + 14px);
+}
+.story-title {
+  display: inline-block; margin: 0 -8px 8px; padding: 2px 8px; border-radius: 10px;
+  font-size: calc(var(--story-size) * 0.85); color: var(--ink-soft);
+}
+/* Each line is a button (tap to hear it) that looks like a line of the story. */
+.sent {
+  display: block; width: calc(100% + 20px); border: 0; background: none; text-align: left; color: var(--ink);
+  margin: 0 -10px; padding: 1px 10px; border-radius: 12px; cursor: pointer;
+  font-size: var(--story-size); font-weight: 700; line-height: 1.5;
+  transition: background .15s;
+}
+/* Hover only on devices with a mouse: on a touch screen it sticks to the last thing tapped. */
+@media (hover: hover) { .sent:hover { background: var(--bg); } }
+.sent.is-lit, .story-title.is-lit { background: var(--yellow-soft); color: var(--ink); }
+/* A word that matches a found piece is underlined in green; the one being read lights up yellow. */
+.key { border-radius: 6px; padding: 0 2px; margin: 0 -2px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.key.is-found {
+  text-decoration: underline; text-decoration-color: var(--green); text-decoration-thickness: 4px; text-underline-offset: .2em;
+  text-decoration-skip-ink: none; /* one unbroken line, even under g and p */
+}
+.key.is-lit { background: var(--yellow); }
+
+/* ---------- puzzle pieces ---------- */
+/* Every piece is one SVG (js/art.js): the jigsaw shape, then its picture. The tab on top fits into
+   the story card. */
+.piece-svg { width: 100%; height: auto; overflow: visible; }
+.piece-shape { fill: var(--surface); stroke: var(--line); stroke-width: 3; }
+
+/* Four spots under the story, in story order. Their tabs overlap the card's bottom edge. */
+.slots {
+  list-style: none; margin: calc(var(--slot) * -0.2) 0 0; padding: 0; position: relative;
+  display: grid; grid-template-columns: repeat(4, var(--slot)); justify-content: center; gap: clamp(6px, 1.6vw, 18px);
+}
+.slot { position: relative; }
+.slot .piece-shape { fill: var(--bg); stroke: var(--line); stroke-dasharray: 7 6; }
+.slot-num {
+  position: absolute; left: 0; right: 0; top: 56%; transform: translateY(-50%); text-align: center;
+  font-size: calc(var(--slot) * 0.32); font-weight: 700; line-height: 1; color: #8A7B5C; pointer-events: none;
+}
+.slot.is-filled .piece-shape { fill: var(--surface); stroke: var(--green); stroke-width: 4; stroke-dasharray: none; }
+.slot-piece {
+  display: block; width: 100%; padding: 0; border: 0; background: none; border-radius: 12px;
+  transform-origin: 0 0; position: relative; z-index: 1;
+}
+.slot-check {
+  position: absolute; right: -6px; top: calc(var(--slot) * 0.2 - 8px); z-index: 2;
+  width: clamp(22px, 5vw, 30px); height: clamp(22px, 5vw, 30px); border-radius: 50%; padding: 4px;
+  background: var(--green); color: #FFFFFF; box-shadow: 0 0 0 3px var(--surface); pointer-events: none;
+}
+.slot-check svg { width: 100%; height: 100%; }
+
+/* The tray: pieces stay where they are; a placed piece leaves its outline behind. */
+.tray { display: grid; grid-template-columns: repeat(3, var(--piece)); justify-content: center; gap: 14px clamp(8px, 2vw, 16px); }
+@media (min-width: 721px) and (max-width: 959px) {
+  .tray { grid-template-columns: repeat(6, var(--piece)); } /* one row under the spots */
+}
+@media (min-width: 960px) {
+  .tray { grid-template-columns: repeat(2, var(--piece)); }
+}
+.tray-piece {
+  display: block; padding: 0; border: 0; background: none; border-radius: 12px;
+  filter: drop-shadow(0 4px 0 var(--line));
+  transition: transform .08s ease, filter .15s ease, opacity .2s ease;
+}
+/* Hover only with a mouse: on a touch screen the dark outline stuck to the last piece tapped and
+   looked like it was picked. */
+@media (hover: hover) { .tray-piece:hover:not(.is-wrong) .piece-shape { stroke: var(--ink); } }
+.tray-piece:active:not(.is-wrong) { transform: translateY(2px); filter: drop-shadow(0 2px 0 var(--line)); }
+@media (min-width: 721px) {
+  /* Pieces can be dragged here (js/app.js), so a touch on one moves it instead of scrolling. */
+  .tray-piece { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; cursor: grab; }
+}
+.tray-piece.is-dragging { position: relative; z-index: 5; cursor: grabbing; filter: drop-shadow(0 10px 8px rgba(31, 42, 68, .22)); }
+.tray-piece.is-wrong { opacity: .3; filter: grayscale(1); cursor: default; }
+.tray-piece.shake { animation: shake .4s; }
+.tray-gap { display: block; }
+.tray-gap .piece-shape { fill: none; stroke: var(--line); stroke-dasharray: 7 6; }
+
+/* ---------- feedback and the end ---------- */
+.feedback { min-height: 1.6em; text-align: center; font-size: 20px; font-weight: 700; }
+.feedback--yay { color: var(--green); }
+.feedback--oops { color: var(--ink); }
+
+.done { display: grid; justify-items: center; gap: 14px; text-align: center; padding: 8px 0; animation: rise .35s ease-out; }
+@media (min-width: 960px) { .done { width: calc(var(--piece) * 2 + 16px); padding-top: 24px; } }
+.done-title { font-size: clamp(26px, 3.4vw, 34px); font-weight: 700; color: var(--green); text-wrap: balance; }
+.done-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; } /* room for an imprecise tap */
+/* The buttons wait until taps count again (js/app.js), then rise into view. */
+.done.is-waiting .done-actions { visibility: hidden; }
+.done:not(.is-waiting) .done-actions { animation: rise .3s ease-out; }
+.done:focus { outline: none; }
+/* The four pictures pop in story order, all done within 0.6s. */
+.puzzle.is-done .slot.is-filled { animation: pop .36s ease-out both; }
+.puzzle.is-done .slot.is-filled:nth-child(2) { animation-delay: .06s; }
+.puzzle.is-done .slot.is-filled:nth-child(3) { animation-delay: .12s; }
+.puzzle.is-done .slot.is-filled:nth-child(4) { animation-delay: .18s; }
+@media (prefers-reduced-motion: reduce) {
+  /* The shared rule shortens animations but keeps their delays, so each spot sat shrunk until its turn. */
+  .puzzle.is-done .slot.is-filled { animation: none; }
+}
+
+/* ---------- for teachers: closed until a teacher opens it ---------- */
+/* Closed, it's one small grey line under the stories, so children don't land in a page of text. */
+.teachers-toggle {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; min-height: 48px; padding: 6px 8px;
+  list-style: none; cursor: pointer; color: var(--ink-soft); border-radius: var(--radius-sm);
+}
+.teachers-toggle::-webkit-details-marker { display: none; }
+@media (hover: hover) { .teachers-toggle:hover { color: var(--ink); } }
+.teachers-chev { width: 20px; height: 20px; flex: none; transition: transform .2s; }
+.teachers[open] .teachers-chev { transform: rotate(90deg); }
+.teachers-title { font-size: 18px; }
+.teachers-hint { font-size: 15px; }
+.teachers-body { display: grid; gap: 12px; margin-top: 8px; }
+.teachers h3 { margin: 12px 0 0; }
+.card-lede { color: var(--ink-soft); max-width: 70ch; }
+.steps, .tips { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; max-width: 75ch; }
+.standards { display: grid; gap: 14px; }
+@media (min-width: 820px) { .standards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.standard { border: 2px solid var(--line); border-radius: var(--radius-sm); padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+.standard-code {
+  justify-self: start; padding: 2px 12px; border-radius: 999px; background: var(--ink); color: #FFFFFF;
+  font-weight: 700; font-size: 16px;
+}
+.standard blockquote { margin: 0; padding-left: 12px; border-left: 4px solid var(--line); font-style: italic; }
+.teachers code { font-size: .9em; background: var(--bg-deep); padding: 1px 6px; border-radius: 6px; }
+
+/* ---------- small screens ---------- */
+@media (max-width: 720px) {
+  .puzzle { scroll-margin-top: 0; }
+  .puzzle-top { flex-direction: column; align-items: stretch; }
+  .prompt-row { justify-content: space-between; }
+}

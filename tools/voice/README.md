@@ -1,7 +1,7 @@
 # Default voice (Kokoro)
 
 Makes the default audio clips for every lab with Kokoro-82M, an open-source voice model (Apache-2.0
-code and weights, no limits on the audio it makes). Both labs use its "Heart" voice (`af_heart`).
+code and weights, no limits on the audio it makes). Every lab uses its "Heart" voice (`af_heart`).
 It runs on a Mac at build time. Nothing here ships to the browser: the pages only play the finished
 files, so no AI runs in the classroom.
 
@@ -15,6 +15,7 @@ qa.py                  automatic checks: phoneme recognizers and acoustic measur
 letter_chains.py       Letter Chains: letter sounds, words, keywords, sentences
 phonemes.py            Letter Chains' exact phonemes
 monster_math.py        Monster Math: every spoken line
+story_puzzles.py       Story Puzzles: every spoken line, through Monster Math's pipeline
 test_monster_math.py   tests for Monster Math's word check
 requirements.txt       pinned versions
 ```
@@ -230,6 +231,38 @@ page that plays every clip with the ones to check first.
 Make sure the run ends with no clips to check, or listen to the ones it lists. Copy `phrases/*.mp3`
 into `labs/monster-math/assets/audio/phrases/`, then run `node tools/build-audio.js` from the lab's
 folder. The lab's tests fail if any line has no clip.
+
+## Story Puzzles
+
+`story_puzzles.py` runs Monster Math's pipeline and review (above) on the lines from
+`labs/story-puzzles/tools/list-phrases.js`: each story's six lines, "Let's read …" with its title,
+and the directions. The
+stories have no letter sounds or made-up words, so the dictionary is right for almost every word. A few
+are forced to exact phonemes in every line (`FORCE`):
+
+- short o is the "ah" of dot, as the lab teaches it: dog, dogs, log, frog, on and off. The dictionary
+  gives them the "aw" vowel, which would make dog and dot sound different;
+- names the dictionary doesn't know: Sid, Kim.
+
+"and" is stressed, as in Monster Math, so "Sid digs and digs" is never heard as "digs in digs".
+
+```sh
+python story_puzzles.py --out /tmp/story-puzzles-voice                      # every line
+python story_puzzles.py --out /tmp/story-puzzles-voice --only fat-cat-3     # some lines; the rest are kept
+```
+
+The shipped run made 73 clips with none left to check. Later the ten bare titles were replaced by
+"Let's read …" lines, made with `--only` in that run's folder: a title said on its own sounded abrupt,
+and "This story is called …" sounded like an announcement rather than the start of a story. Check
+that "read" comes out as "reed" (`ɹˈid` in the manifest). Two lines were rewritten rather than
+shipped flagged: the title "Sid Digs" (both recognizers heard "said", on every take) became "Sid Can Dig", and
+"Then Gus naps on a rug" (heard as "Gus snaps") became "Then the pup naps on a rug". As in Letter
+Chains, the recognizers often hear this voice's short i as short e ("mitt" as "met") even on clips
+that pass, so the short-i stories (*The Big Pig*, *Sid Can Dig*) are the ones to listen to first.
+
+Copy `phrases/*.mp3` into `labs/story-puzzles/assets/audio/phrases/`, then run
+`node tools/build-audio.js --from <out>/af_heart/manifest.json` from the lab's folder. `--from` records
+the text each clip was made from, and the lab's tests fail if a line changes after its clip was made.
 
 ## Telling schools
 
