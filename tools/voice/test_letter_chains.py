@@ -222,5 +222,20 @@ class ListenPage(unittest.TestCase):
         self.assertIn('the way it is made needs to change', page)
 
 
+class EarlierRun(unittest.TestCase):
+    def test_a_remake_keeps_the_takes_the_owner_turned_down(self):
+        mpath = os.path.join(tempfile.mkdtemp(), 'manifest.json')
+        with open(mpath, 'w', encoding='utf-8') as f:
+            json.dump({'clips': [{'id': 'sounds/ng', 'group': 'sounds', 'name': 'ng'}], 'to_hear': ['sounds/ng'],
+                       'rejected': {'sounds/ng': ['sˈɪŋ@0.45#3']}}, f)
+        earlier, hear, rejected = LC.earlier_run(mpath)
+        self.assertEqual(list(earlier), ['sounds/ng'])
+        self.assertEqual(hear, ['sounds/ng'])
+        self.assertEqual(rejected, {'sounds/ng': ['sˈɪŋ@0.45#3']})
+
+    def test_a_new_run_folder_starts_empty(self):
+        self.assertEqual(LC.earlier_run(os.path.join(tempfile.mkdtemp(), 'manifest.json')), ({}, [], {}))
+
+
 if __name__ == '__main__':
     unittest.main()

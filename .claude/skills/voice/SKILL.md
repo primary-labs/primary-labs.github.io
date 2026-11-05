@@ -24,7 +24,12 @@ Every lab plays clips made ahead of time by `tools/voice/` with Kokoro-82M's "He
   check passes.
 - **When a clip sounds wrong, check the live clip first** (`--review`) before remaking anything.
 - Never let the dictionary guess a word, and never use macOS voices (Apple allows them for personal use only).
-- Run long jobs in the background with a log. Commit or push only when asked.
+- **One voice job at a time, and keep the Mac awake.** Runs use several CPU cores and heat the laptop, so
+  check `pgrep -fl 'letter_chains|monster_math|story_puzzles'` before starting one. Run long jobs in the
+  background with a log, under `caffeinate -i` (a Mac asleep on battery once stopped a run for 8 hours),
+  and tell the owner about how long it will take. Wait for the task notification or the run's last line
+  (`== ...`), not a `pgrep` loop: two loops once matched each other's command line and never ended.
+- Commit or push only when asked.
 
 ## Setup
 
@@ -133,8 +138,9 @@ Every lab ships MP3 only: letter sounds at 128 kbps, everything else at 96. The 
 
 **Letter Chains**
 1. Copy the new MP3s from `$R/letter-chains/af_heart/{words,keywords,sentences,sounds}/` into
-   `labs/letter-chaining/assets/audio/<same folder>/`. Only the clips meant to ship: picked ones, and ones
-   whose checks pass. Never copy WAVs or `-long` files.
+   `labs/letter-chaining/assets/audio/<same folder>/`. Only the clips meant to ship: letter sounds the owner
+   picked (passing the checks is not enough), and words, keywords and sentences that were picked or pass
+   their checks. Never copy WAVs or `-long` files.
 2. Delete the MP3s of words no longer in the list (`build-audio.js` never deletes audio).
 3. `cd labs/letter-chaining && node tools/build-audio.js`
 4. Update the clip list in `labs/letter-chaining/assets/audio/README.md` by hand if clips were added or removed.

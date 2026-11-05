@@ -1218,6 +1218,21 @@ def load_manifest(vdir):
         return mpath, json.load(f)
 
 
+def earlier_run(mpath):
+    """What a run keeps from the last run into the same folder: its clips (a run with --only or --names
+    replaces just its own), the clips still waiting for the owner's ear, and the takes the owner turned
+    down, so a remake never offers them again."""
+    old = {}
+    if os.path.exists(mpath):
+        with open(mpath, encoding='utf-8') as f:
+            old = json.load(f)
+    earlier = {c['id']: c for c in old.get('clips', [])}
+    hear = old.get('to_hear')
+    if hear is None:  # a run folder from before the listen list: its letter sounds and flagged clips
+        hear = [c['id'] for c in listen_rows(list(earlier.values()))]
+    return earlier, hear, old.get('rejected', {})
+
+
 def write_listen(vdir, voice, manifest):
     """listen.html: every clip still waiting for the owner's ear (manifest['to_hear']), across runs. Records
     which takes it shows (manifest['on_page']), so takes the owner rejects never come back."""
@@ -1630,14 +1645,7 @@ def main():
                     'reference_vowels': {k: ({'F1': round(v['F1']), 'F2': round(v['F2'])} if v else None) for k, v in refs.items()},
                     'reference_notes': ref_notes, 'speaking_f0_hz': round(voice_f0) if voice_f0 else None, 'clips': []}
         mpath = os.path.join(vdir, 'manifest.json')
-        earlier, hear = {}, None  # clips from earlier runs into the same folder (with --only or --names) are kept
-        if os.path.exists(mpath):
-            with open(mpath, encoding='utf-8') as f:
-                old = json.load(f)
-            earlier = {c['id']: c for c in old.get('clips', [])}
-            hear = old.get('to_hear')
-        if hear is None:  # a run folder from before the listen list: its letter sounds and flagged clips
-            hear = [c['id'] for c in listen_rows(list(earlier.values()))]
+        earlier, hear, manifest['rejected'] = earlier_run(mpath)
 
         def save_manifest():
             os.makedirs(vdir, exist_ok=True)
