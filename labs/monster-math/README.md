@@ -41,7 +41,7 @@ Every spoken line has an id in `js/phrases.js` (for example `problem-add-3-2` â†
 node --test labs/monster-math/test/
 ```
 
-They check problem generation (ranges, answer choices, no problem twice in a row), that every line has a phrase and every phrase has a clip, the audio tools, and the control icons. The site's security and design rules are checked for every page by `node --test test/` at the repo root.
+They check problem generation (ranges, answer choices, no problem twice in a row), that every line has a phrase and every phrase has a clip, the clip player (a clip that fails to download plays once the connection is back, so the device voice is only a stopgap), the audio tools, and the control icons. The site's security and design rules are checked for every page by `node --test test/` at the repo root.
 
 ## Files
 
@@ -50,7 +50,7 @@ index.html             page shell
 css/styles.css         styles for this lab (shared look: ../../assets/primary-labs.css, see DESIGN.md)
 js/phrases.js          every spoken line: id, spoken text, on-screen text
 js/problems.js         problems and answer choices
-js/sound.js            clip player, device-voice fallback, sound effects
+js/sound.js            clip player (a failed download is retried), device-voice fallback, sound effects
 js/art.js              monster and robot drawings, the red X, control icons
 js/app.js              the activity
 assets/audio/          clips (MP3, Heart voice), index.js, and the clip list

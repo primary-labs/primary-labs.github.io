@@ -96,17 +96,31 @@
   var loads = {};      // id → Promise<boolean>
   var buffers = {};    // id → Promise<AudioBuffer|null>
 
+  function fetchClip(id) {
+    return new Promise(function (resolve) {
+      if (clipData[id]) return resolve(true);
+      var s = document.createElement('script');
+      s.src = CLIP_ROOT + id + '.js';
+      s.async = true;
+      s.onload = function () { resolve(!!clipData[id]); };
+      s.onerror = function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        resolve(false);
+      };
+      document.head.appendChild(s);
+    });
+  }
+
+  /* School Wi-Fi drops requests now and then. A failed download is tried once more straight away,
+     and if that fails too, again the next time the clip is needed (not cached as missing). */
   function loadClip(id) {
     if (!loads[id]) {
-      loads[id] = new Promise(function (resolve) {
-        if (clipData[id]) return resolve(true);
-        var s = document.createElement('script');
-        s.src = CLIP_ROOT + id + '.js';
-        s.async = true;
-        s.onload = function () { resolve(!!clipData[id]); };
-        s.onerror = function () { resolve(false); };
-        document.head.appendChild(s);
-      });
+      loads[id] = fetchClip(id)
+        .then(function (ok) { return ok || fetchClip(id); })
+        .then(function (ok) {
+          if (!ok) delete loads[id];
+          return ok;
+        });
     }
     return loads[id];
   }
@@ -120,13 +134,15 @@
     if (!buffers[id]) {
       buffers[id] = loadClip(id).then(function (ok) {
         var c = ok && audio();
-        if (!c) return null;
+        if (!c) { delete buffers[id]; return null; } // try again next time
         var bin = atob(clipData[id].b64);
         var bytes = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        clipData[id].b64 = null; // keep the decoded audio instead
-        return decode(c, bytes.buffer);
-      }).catch(function () { return null; });
+        return decode(c, bytes.buffer).then(function (buf) {
+          clipData[id].b64 = null; // keep the decoded audio instead
+          return buf;
+        });
+      }).catch(function () { delete buffers[id]; return null; });
     }
     return buffers[id];
   }
