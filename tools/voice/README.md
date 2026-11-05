@@ -10,15 +10,32 @@ computer and can't say a letter sound on its own, and the macOS "Samantha" clips
 development, which Apple's license does not allow on a public site.
 
 ```
-engine.py              the Kokoro model, and the trim, level and save helpers both labs use
+engine.py              the Kokoro model, the trim, level and save helpers, run folders, model lookup
 qa.py                  automatic checks: phoneme recognizers and acoustic measurements
-letter_chains.py       Letter Chains: letter sounds, words, keywords, sentences
-phonemes.py            Letter Chains' exact phonemes
+letter_chains.py       Letter Chains: letter sounds, words, keywords, sentences; review, listen page, picks
+phonemes.py            Letter Chains' exact phonemes, and the takes picked by ear (PICKED)
 monster_math.py        Monster Math: every spoken line
 story_puzzles.py       Story Puzzles: every spoken line, through Monster Math's pipeline
-test_monster_math.py   tests for Monster Math's word check
+save_masters.py        zips the WAV masters of the clips a lab ships
+spectrogram.py         spectrograms of clips as one PNG, to look at a sound (numpy only)
+test_*.py              tests: python -m unittest
 requirements.txt       pinned versions
 ```
+
+The steps for making, checking and shipping clips are in the `voice` skill
+(`.claude/skills/voice/SKILL.md`). This README has the reasons behind them.
+
+## Where things go
+
+- **Runs** go to `~/Documents/Primary Labs audio/runs/<lab>/` (`letter-chains`, `monster-math`,
+  `story-puzzles`), the same folder every time, so `--only` finds the last full run. They live outside the
+  repo, so `git clean` and worktrees can't lose them. `--out` overrides the folder.
+- **Masters**: after clips ship, `python save_masters.py <lab>` zips the WAV master of every shipped clip
+  and the run's manifest into `~/Documents/Primary Labs audio/masters/<lab>-<date>.zip`. Letter sounds
+  never come out the same twice, so these are the only way back to the exact audio.
+- **Models** come only from the local Hugging Face cache, and runs never go online. A missing model stops
+  the run with the `hf download` command that fetches it.
+- **Bitrate**: every lab ships MP3, letter sounds at 128 kbps and everything else at 96 (`engine.KBPS`).
 
 ## Set up
 
@@ -31,8 +48,14 @@ pip install -r requirements.txt
 python -m unittest     # tests
 ```
 
-The first run downloads the Kokoro weights (about 330 MB) from Hugging Face. Monster Math's review also
-downloads Whisper (about 1 GB) and wav2vec2-espeak (about 1.3 GB).
+Runs don't download anything. Fetch the models once (about 2.6 GB in all):
+
+```sh
+hf download hexgrad/Kokoro-82M --include config.json kokoro-v1_0.pth voices/af_heart.pt
+hf download anyspeech/zipa-small-crctc-500k --include model.onnx tokens.txt      # CC BY 4.0
+hf download facebook/wav2vec2-lv-60-espeak-cv-ft --include '*.json' pytorch_model.bin
+hf download openai/whisper-small.en --include '*.json' '*.txt' model.safetensors  # Monster Math, Story Puzzles
+```
 
 ## Letter Chains
 
@@ -46,6 +69,10 @@ Words, keywords and letter sounds are made from exact phoneme strings, never fro
   So "cit" is always /kɪt/ (never "sit"), "gic" is /ɡɪk/ (never "jick"), and "dog" has the same
   vowel as "dot". A word's Kokoro string is its tiles' sounds with the stress mark before the vowel
   tile: "ship" is `ʃˈɪp`, "cake" `kˈAk`.
+- A word Kokoro says wrong whatever the take can be written other ways in `WORD_MORE`, tried when no take
+  passes. As `kˈAk`, "cake" was heard as "take" by both recognizers and the owner; written `kʰˈeɪk` (an
+  aspirated k, long a as its two sounds), both hear /k/. A spelling the owner picks is used in the
+  word's sentence too.
 - Sentences go through Kokoro's dictionary, with the lesson word forced to the same phonemes as its
   word clip, and "on" forced to the "ah" of dot. A word the dictionary doesn't know stops the build
   instead of being guessed. "ton" is the made-up word "tahn" and has no sentence.
@@ -60,20 +87,39 @@ Words, keywords and letter sounds are made from exact phoneme strings, never fro
     (`trace_ms` in `phonemes.py`), which carries the back-of-the-mouth cue. The owner picked 65 ms by
     ear from 50 to 80 ms; longer starts to sound like "guh."
   - Long and other vowels (ai, oo, ow, ...) are said whole, as words. /ow/ is pinned to one take the
-    owner picked by ear (`WHOLE_PICKED` in `phonemes.py`): the first pick passed both recognizers
-    but sounded wrong.
-  - Vowels and /n/ come from the steadiest part of the sound inside a word (sometimes said slower),
-    lengthened with Praat's PSOLA into a short version (380 ms for vowels, 320 ms for /n/, plus a
-    little silence at each end) and a held 700 ms version (not used by the lab yet), with a gentle
-    one-semitone pitch fall. Kokoro can't hold a sound itself: stretched timings go silent.
+    owner picked by ear (`PICKED` in `phonemes.py`): the first pick passed both recognizers but
+    sounded wrong.
+  - Vowels and /n/ come from the steadiest part of the sound inside a word, lengthened with Praat's
+    PSOLA into a short version (380 ms for vowels, 320 ms for /n/, plus a little silence at each end)
+    and a held 700 ms version (not used by the lab yet), with a gentle one-semitone pitch fall. The
+    source words are said slower (down to 0.35x), at normal speed, or held by Kokoro, or the vowel is
+    said on its own ("ah"). The owner heard an echo in the first short vowels, all from slowed words, so
+    the listen page offers the best take of each way.
+  - **Cut options** reuse a source word: `~N` keeps N ms more (of the vowel after a stop, of a glide), `=N`
+    makes the sound N ms long, `^N` adds N dB of hiss (v, z). They come from `trace_options`,
+    `length_options` and `boost_options` in a sound's spec, and appear in take names (`vˈæn+v8=200^6`).
+    ng, v, z and r also come 200 and 250 ms long, since stretching to 320 ms may be what the owner heard
+    as wrong; v and z also come with 6 and 12 dB more hiss (Kokoro's v has little). `=0` keeps a sound as
+    long as Kokoro said it, not stretched. `option_sets` applies several at once (`sˈɪŋ~70=0`).
+  - **ng.** At normal speed Kokoro's ng hum lasts only 70-115 ms, shorter than the smallest piece the
+    vowels use (120 ms), so every normal-speed ng source used to give no take, and every ng came from a
+    word slowed to 0.35-0.45x and stretched hard (up to 59% copied pitch periods). The owner heard three
+    rounds of those as wrong. ng now uses pieces down to 60 ms, comes unstretched, and keeps 40-100 ms of
+    the vowel before it (`~N` for a nasal): alone, a nasal hum barely says where the tongue is (ZIPA heard
+    "el" or nothing); with the vowel's move into it, ZIPA hears ng.
+  - **Held sounds.** A source like `vˈæn+v10` has Kokoro hold the v for 10 frames (25 ms each) while
+    the rest of the word stays at normal speed (`engine.Kokoro.synth(hold=...)`). Held to about 200 ms,
+    v, z and r stay voiced; vowels start to fade past about 150 ms; ng doesn't hold at all (its voicing
+    dies out).
   - Praat's PSOLA gives slightly different audio each time, so letter sounds (and the stops, whose
     level follows the vowels) never come out byte for byte the same twice. Words, keywords and
     sentences do.
 
 ### Letter sounds for the full tile set
 
-The first eight sounds (a i o t d c g n) are made as above and kept as they are. The rest of the
-tile set needs sounds Kokoro won't say alone either. Two things shape how they're made:
+The first eight sounds (a i o t d c g n) are made as above; `--new-only` skips them, but any of them can
+be remade with `--names` like every other sound. The rest of the tile set needs sounds Kokoro won't say
+alone either. Two things shape how they're made:
 
 - Kokoro's own timing runs late, and slow speeds mostly add silence: a final v, z or l is 80-150 ms
   at any speed. So sounds are found in the audio itself, from words said at 0.5-1.0x speed.
@@ -85,13 +131,12 @@ tile set needs sounds Kokoro won't say alone either. Two things shape how they'r
 | e, u | as a, i, o (u from "tub", "cut" and "up": after h and p the formant tracker slips on this voice) | as a, i, o |
 | m, ng | as n | as n |
 | p, b | as t and d | as t and d |
-| s, sh, f, th | the steady hiss of a word-final sound (unvoiced, strong high frequencies), 340 ms; lengthened by joining copies of the hiss if shorter. s and sh sit 5 dB below the vowel sounds, f and th 9 dB | voicing (a buzz or an "uh"), s too low or sh too high in pitch, length |
-| h | the breath before the vowel starts, 12 dB below the vowels | voicing, length |
-| v, l, r | the steady part (v after the vowel, l at the end of "ul", r from "er"), held to 320 ms with PSOLA | voicing, dropouts, sounding mechanical, a stretch over 2.5x |
-| z | from the start of "zip" (Kokoro says a final z without voicing), lengthened by joining copies, since PSOLA smears the hiss into a hum | as v |
-| ch, j | like a stop, with a longer release (ch up to 190 ms), 5 dB below the vowels. j keeps 50 ms of the vowel of "job" (`trace_ms`), as /g/ does: with the release alone, both recognizers heard /ch/ | as t and d |
+| s, sh, f, th | the steady hiss of a word-final sound (unvoiced, strong high frequencies), 340 ms. If shorter, the real hiss continues into new noise with the same spectrum (`hiss_extend`): joining copies of the hiss repeated every 100 ms or so, which the owner heard as an echo. s and sh sit 5 dB below the vowel sounds, f and th 9 dB | voicing (a buzz or an "uh"), s too low or sh too high in pitch, length |
+| h | the first 70 ms of the breath before the vowel (later in the breath Kokoro's voicing has started, heard as "hih"), continued to 280 ms with noise shaped like the whole breath, smoothed so it keeps the vowel's color without its pulses (a whispered "hhh"). Also 160 and 220 ms long. 12 dB below the vowels | voicing, length |
+| v, z, l, r | the steady part, held to 320 ms. v, z and r also come from the start of a word held by Kokoro (`vˈæn+v10`, `zˈɪp+z10`, `ɹˈɛd+ɹ10`): Kokoro devoices a final v or z (the old v was heard as f), and r from "er" is a vowel. v and z are lengthened in two bands: the buzz with PSOLA, the hiss with matching noise (PSOLA alone smears the hiss into a hum; joining copies left seams). l and r use PSOLA | voicing, dropouts, sounding mechanical, a stretch over 2.5x |
+| ch, j | like a stop, with a longer release (ch up to 190 ms), 5 dB below the vowels. j keeps 50 ms of the vowel of "job" (`trace_ms`), as /g/ does: with the release alone, both recognizers heard /ch/. The owner asked for a longer j, so it is also cut from slower words with 70-110 ms of the vowel (`trace_options`) | as t and d |
 | qu, x, nk | cut out of a word: qu from the k burst to where the vowel takes over ("quiz"), x from the k burst to the end of the s ("fox"), nk from the ng hum to the end of the k ("junk") | length, an "uh" after, both recognizers |
-| w, y | from where voicing starts to where the vowel takes over (F2 halfway to the vowel's), not stretched, so there is very little vowel | voicing, length, both recognizers |
+| w, y | from where voicing starts to where the vowel takes over (F2 halfway to the vowel's), not stretched, so there is very little vowel. w is also cut 30 and 60 ms later (`trace_options`): the owner heard the first w as wrong | voicing, length, both recognizers |
 | ai ee oa igh u_e oo ow oi ar or er | said on their own like a word ("A", "E", "oh", "eye", "you", "ooh", "ow", "oy", "are", "or", "er") and checked like a word | as words |
 
 ### Checks
@@ -127,46 +172,76 @@ vowels, vowel pairs and r-vowels (/ɛ/, /ʌ/ and /i/ are checked by their forman
 the full tile set are said alone three ways first; the slower, faster and carrier takes are tried
 only when none of those three is clean. Sentences are checked only at their edges. Clips with any problem are
 marked `check` in `manifest.json`, with the reasons. Each voice's manifest also lists which vowel
-comparisons its references could not support. A person still listens to every clip before it ships.
+comparisons its references could not support. A person still listens to every letter sound before it
+ships: the checks passed /g/, /ow/, /j/ and /w/ when the owner heard them as wrong.
+
+### Picking by ear
+
+Every run writes `listen.html` in the run folder: a plain local page (not part of the site) with every
+clip still waiting for the owner's ear, kept across runs (`manifest.json`'s `to_hear`). For each clip
+it plays the lab's live clip, then at most four takes (`LISTEN_TAKES`): the best take of each of the best
+ways the clip was made (held by Kokoro, from a slowed word, said on its own, shorter, written another way).
+A run can make hundreds of takes of a sound; the first pages showed them all, folded, and the owner
+said no person would go through 500. The owner picks a take, keeps the live clip, or says none sound
+right, and copies the box at the bottom back. Takes turned down are recorded (`rejected`) and never
+shown again, so the next page offers four others.
+
+`--pick "<the box>"` puts each picked take in the run folder as the exact file the owner heard (WAV and
+MP3) and prints the lines to add to `PICKED` in `phonemes.py`, so later runs make the same take: a take
+kind for words, keywords and whole vowels (`'words/pin': 'dot2'`), the source for a cut letter sound
+(`'sounds/d': 'dˈʌt~50'`). Picked and kept clips leave the page; the rest stay. Smoothed sounds (vowels,
+n, m, ng, v, z, l, r) come out slightly different on each run; the masters keep the exact audio. /g/ and
+/j/ are pinned in their specs instead.
+
+`--review` checks the clips the lab ships now with the same checks, without making anything: what
+both recognizers hear and every problem, printed and saved as `review.json`. For real words and
+keywords, Whisper (as in Monster Math) also writes down the word it hears: it heard the old "cake" as
+"Take.", which the phoneme checks only half caught. Words that sound the same ("son" for sun) are flagged
+too, so read those flags with that in mind. It is the first step when
+someone says a clip sounds wrong. A letter sound cut from a word is checked as the run that made it would
+when that run's record is in the folder and its MP3 is the shipped one; otherwise where the burst is, is
+measured from the clip.
 
 ### Run it
 
 ```sh
-# Optional recognizer models for the checks
-#   ZIPA-CR small:   https://huggingface.co/anyspeech/zipa-small-crctc-500k  (CC BY 4.0)
-#   wav2vec2-espeak: https://huggingface.co/facebook/wav2vec2-lv-60-espeak-cv-ft  (Apache-2.0)
-
-python letter_chains.py --out /tmp/voice-pack \
-  --voices af_heart,af_nicole,am_michael \
-  --zipa path/to/zipa-small-crctc-500k --w2v2 path/to/wav2vec2-lv-60-espeak-cv-ft
+python letter_chains.py --only sounds --names d --all-takes     # remake one sound, every take
+python letter_chains.py --review --only sounds --names d        # check the shipped clip
+python letter_chains.py --pick "<box from listen.html>"         # ship the takes picked by ear
+python letter_chains.py --listen                                # rebuild listen.html
+python letter_chains.py                                         # everything (hours: ask the owner first)
 ```
+
+Both recognizers (ZIPA-CR small, CC BY 4.0, and wav2vec2-espeak, Apache-2.0) are required and come from
+the local cache; `--zipa` and `--w2v2` take other model folders. `--voices af_heart,af_nicole` makes other
+voices (their voice files must be downloaded first).
 
 Content comes straight from the lab (`labs/letter-chaining/tools/content.js` reads `js/data.js` and
 `js/words.js`), so new words and sentences are picked up automatically; how each letter sound is
 made, and each keyword's phonemes, are in `phonemes.py`.
 
 - `--new-only` skips every clip the lab already ships, so a new word list only makes the new clips.
-- `--names ship,fish` makes just those clips. Runs into the same `--out` folder add to its manifest.
+- `--names ship,fish` makes just those clips. Runs into the same folder add to its manifest.
+- `--all-takes` makes every take even after one passes, and every other spelling, to pick by ear.
 
 Output for each voice: `words/`, `keywords/`, `sentences/` (same names as the lab's `assets/audio/`),
 `sounds/<letter>.wav` and `sounds/<letter>-long.wav`, and `manifest.json`. Every take that was
 tried is kept under `takes/` for comparison.
 
 Each clip is saved twice: a WAV master and the MP3 the lab ships, letter sounds at 128 kbps and
-everything else at 96 (`MP3_KBPS`). At 64 kbps, which Monster Math uses, stops picked up a smear just
-before their burst: the c, t and ch sounds, and the first sound of about 1 in 10 words like "keep".
-To ship a take from `takes/` instead, convert it with `engine.to_mp3(wav, mp3, kbps)`, which also
-checks the bitrate and length.
+everything else at 96 (`engine.KBPS`). At 64 kbps, which Monster Math and Story Puzzles used at first,
+stops picked up a smear just before their burst: the c, t and ch sounds, and the first sound of about
+1 in 10 words like "keep". To ship a take from `takes/`, use `--pick`.
 
 ### Shipping a voice
 
-The lab ships `af_heart` ("Heart") as MP3. The WAV masters stay out of git, so keep them somewhere
-safe: letter sounds never come out the same twice. To update the lab, copy the voice's `words/`,
-`keywords/` and `sentences/` MP3s over the files in `labs/letter-chaining/assets/audio/`, and its
-`sounds/<name>.mp3` files into `assets/audio/sounds/`. Delete clips for words no longer in the list.
-Then run `node tools/build-audio.js` from the lab's folder. `labs/letter-chaining/test/audio.test.js`
-checks that every clip is there, as MP3, at the right bitrate. Listen to every clip marked `check`
-in `manifest.json` first.
+The lab ships `af_heart` ("Heart") as MP3. To update the lab, copy the voice's `words/`, `keywords/`
+and `sentences/` MP3s over the files in `labs/letter-chaining/assets/audio/`, and its `sounds/<name>.mp3`
+files into `assets/audio/sounds/`. Delete clips for words no longer in the list. Then run
+`node tools/build-audio.js` from the lab's folder and `python save_masters.py letter-chains` here.
+`labs/letter-chaining/test/audio.test.js` checks that every clip is there, as MP3, at the right
+bitrate. Listen to every clip marked `check` in `manifest.json` first, and have the owner pick every
+letter sound.
 
 ## Monster Math
 
@@ -274,15 +349,16 @@ ones, so it isn't used.
 ### Run it
 
 ```sh
-python monster_math.py --out /tmp/monster-math-voice                      # every line
-python monster_math.py --out /tmp/monster-math-voice --only n-3,skip      # some lines; the rest are kept
-python monster_math.py --out /tmp/monster-math-voice --review             # check existing clips again
+python monster_math.py                      # every line
+python monster_math.py --only n-3,skip      # some lines; the rest are kept
+python monster_math.py --review             # check existing clips again
 ```
 
-Use `--only` in the folder of a full run, so the new clips are compared with the other lines; it keeps
-that run's speed. A full run takes about 10 minutes, and the same settings make the same clips.
+The run folder is always the same, so `--only` compares the new clips with the other lines of the last
+full run, and keeps its speed. A full run takes about 10 minutes, and the same settings make the same
+clips: rerun at 96 kbps on 2026-11-04, all 328 came out as the same takes.
 
-Output for the voice: `phrases/<id>.mp3` (what ships: 64 kbps mono), `wav/<id>.wav` (24 kHz masters),
+Output for the voice: `phrases/<id>.mp3` (what ships: 96 kbps mono), `wav/<id>.wav` (24 kHz masters),
 `manifest.json` (what was heard, check results, every take tried) and `listen.html`, a plain local
 page that plays every clip with the ones to check first.
 
@@ -290,7 +366,8 @@ page that plays every clip with the ones to check first.
 
 Make sure the run ends with no clips to check, or listen to the ones it lists. Copy `phrases/*.mp3`
 into `labs/monster-math/assets/audio/phrases/`, then run `node tools/build-audio.js` from the lab's
-folder. The lab's tests fail if any line has no clip.
+folder and `python save_masters.py monster-math` here. The lab's tests fail if any line has no clip,
+or a clip isn't 96 kbps.
 
 ## Story Puzzles
 
@@ -307,8 +384,8 @@ are forced to exact phonemes in every line (`FORCE`):
 "and" is stressed, as in Monster Math, so "Sid digs and digs" is never heard as "digs in digs".
 
 ```sh
-python story_puzzles.py --out /tmp/story-puzzles-voice                      # every line
-python story_puzzles.py --out /tmp/story-puzzles-voice --only fat-cat-3     # some lines; the rest are kept
+python story_puzzles.py                      # every line
+python story_puzzles.py --only fat-cat-3     # some lines; the rest are kept
 ```
 
 The shipped run made 73 clips with none left to check. Later the ten bare titles were replaced by
@@ -321,8 +398,9 @@ Chains, the recognizers often hear this voice's short i as short e ("mitt" as "m
 that pass, so the short-i stories (*The Big Pig*, *Sid Can Dig*) are the ones to listen to first.
 
 Copy `phrases/*.mp3` into `labs/story-puzzles/assets/audio/phrases/`, then run
-`node tools/build-audio.js --from <out>/af_heart/manifest.json` from the lab's folder. `--from` records
-the text each clip was made from, and the lab's tests fail if a line changes after its clip was made.
+`node tools/build-audio.js --from "$HOME/Documents/Primary Labs audio/runs/story-puzzles/af_heart/manifest.json"`
+from the lab's folder, and `python save_masters.py story-puzzles` here. `--from` records the text each
+clip was made from, and the lab's tests fail if a line changes after its clip was made.
 
 ## Telling schools
 

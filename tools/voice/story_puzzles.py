@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Primary Labs · Story Puzzles — make the default-voice clips with Kokoro-82M.
 
-    python story_puzzles.py --out DIR [--voice af_heart] [--speed 0.9] [--only ID,ID,...]
-    python story_puzzles.py --out DIR --review [--only ID,ID,...]     check existing clips again
+    python story_puzzles.py [--out DIR] [--voice af_heart] [--speed 0.9] [--only ID,ID,...]
+    python story_puzzles.py [--out DIR] --review [--only ID,ID,...]     check existing clips again
+
+DIR defaults to ~/Documents/Primary Labs audio/runs/story-puzzles.
 
 Every line comes from labs/story-puzzles/tools/list-phrases.js, the same list the page uses: each
 story's six lines, "Let's read <title>.", and the directions. Story Puzzles has no letter sounds or made-up words,
@@ -29,6 +31,7 @@ sys.path.insert(0, HERE)
 import monster_math as mm  # noqa: E402
 
 mm.LAB = os.path.join(os.path.dirname(os.path.dirname(HERE)), 'labs', 'story-puzzles')
+mm.RUN_NAME = 'story-puzzles'
 mm.__doc__ = __doc__
 
 # misaki symbols: stress mark ˈ before the vowel, ɡ is U+0261 (see phonemes.py)

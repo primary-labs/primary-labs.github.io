@@ -5,14 +5,20 @@
       .synth(ps, voice, seed, speed)     phoneme string -> (audio, frames per token)
     trim, normalize, padded, write       cut silence, level, pad, save as 16-bit WAV
     to_mp3, mp3_kbps                     WAV file -> constant-bitrate MP3, checked; read an MP3's bitrate
+    run_dir(lab), find_model(repo, ...)  where a lab's runs go; a model's folder in the local cache
 
 Audio is 24 kHz mono float32. normalize() aims for -20 LUFS (BS.1770 with 100 ms blocks) with peaks
 below -1 dBFS, so clips from every lab play at the same level.
+
+Runs never go online: every model comes from the local Hugging Face cache, and a missing one stops the
+run with the command that downloads it.
 """
 import hashlib
 import importlib.metadata as md
 import os
 import zlib
+
+os.environ.setdefault('HF_HUB_OFFLINE', '1')  # before anything imports huggingface_hub or transformers
 
 import numpy as np
 import pyloudnorm as pyln
@@ -27,6 +33,43 @@ TARGET_LUFS = -20.0
 PEAK = 0.89          # about -1 dBFS
 PRE_PAD_MS, POST_PAD_MS = 25, 60
 
+# Every lab ships MP3: letter sounds at 128 kbps (short bursts and hisses lose their edge at lower
+# bitrates), everything else at 96. At 64, stops picked up a smear just before their burst.
+KBPS_SOUNDS, KBPS = 128, 96
+
+# Runs and masters live outside the repo, so git clean and worktrees can't lose them. Each lab has one
+# run folder, reused, so --only always finds the last full run.
+AUDIO_HOME = os.path.expanduser('~/Documents/Primary Labs audio')
+RUNS = os.path.join(AUDIO_HOME, 'runs')
+MASTERS = os.path.join(AUDIO_HOME, 'masters')
+
+
+def run_dir(lab):
+    return os.path.join(RUNS, lab)
+
+
+def find_model(repo, patterns):
+    """The model's folder in the local Hugging Face cache. Runs never download: a missing model stops
+    with the command that fetches it (about 2.6 GB for every model the labs use)."""
+    import glob
+    from huggingface_hub import snapshot_download
+    try:
+        path = snapshot_download(repo, allow_patterns=patterns, local_files_only=True)
+        # Without a cached file list, the cache can't tell a file is missing, so look for each one.
+        missing = [p for p in patterns if not glob.glob(os.path.join(path, p))]
+    except Exception as e:  # not cached at all, or only part of it is
+        missing = ['%s (%s)' % (', '.join(patterns), type(e).__name__)]
+    if missing:
+        raise SystemExit('%s: %s not in the local model cache. Download it once, then run again:\n'
+                         '    hf download %s %s' % (repo, ', '.join(missing), repo,
+                                                    ' '.join("--include '%s'" % p for p in patterns)))
+    return path
+
+
+ZIPA = ('anyspeech/zipa-small-crctc-500k', ['model.onnx', 'tokens.txt'])
+W2V2 = ('facebook/wav2vec2-lv-60-espeak-cv-ft', ['*.json', 'pytorch_model.bin'])
+WHISPER = ('openai/whisper-small.en', ['*.json', '*.txt', 'model.safetensors'])
+
 
 def check_symbols(ps, vocab):
     """Kokoro silently drops any symbol it doesn't know (a keyboard g just vanishes), so refuse them."""
@@ -34,6 +77,9 @@ def check_symbols(ps, vocab):
     if bad:
         names = ', '.join('%r (U+%04X)' % (c, ord(c)) for c in bad)
         raise ValueError('Kokoro does not know these symbols in %r: %s' % (ps, names))
+
+
+KOKORO = 'hexgrad/Kokoro-82M'
 
 
 class Kokoro:
@@ -53,7 +99,8 @@ class Kokoro:
         espeak.EspeakFallback = NoGuess
         from kokoro import KPipeline
         self.torch = torch
-        self.pipe = KPipeline(lang_code='a', repo_id='hexgrad/Kokoro-82M', device=device)
+        find_model(KOKORO, ['config.json', 'kokoro-v1_0.pth'])
+        self.pipe = KPipeline(lang_code='a', repo_id=KOKORO, device=device)
         self.model = self.pipe.model
         self.vocab = self.model.vocab
         self.packs = {}
@@ -65,12 +112,15 @@ class Kokoro:
             raise ValueError('No pronunciation for %s in %r. Add an override.' % (missing, text))
         return ps
 
-    def synth(self, ps, voice, seed, speed=1.0):
+    def synth(self, ps, voice, seed, speed=1.0, hold=None):
         """Phoneme string -> (audio, frames per token). Same maths as KModel.forward_with_tokens,
-        with a fixed random seed so a rebuild gives the same clips."""
+        with a fixed random seed so a rebuild gives the same clips. hold: {index in ps: frames} sets
+        how long one sound lasts (25 ms frames), so a sound can be held without slowing the word.
+        v, z and r stay voiced held to about 200 ms; vowels start to fade past about 150 ms."""
         check_symbols(ps, self.vocab)
         torch, m = self.torch, self.model
         if voice not in self.packs:
+            find_model(KOKORO, ['voices/%s.pt' % voice])
             self.packs[voice] = self.pipe.load_voice(voice).to(m.device)
         ref_s = self.packs[voice][len(ps) - 1]
         torch.manual_seed(seed)
@@ -85,6 +135,8 @@ class Kokoro:
             x, _ = m.predictor.lstm(d)
             dur = torch.sigmoid(m.predictor.duration_proj(x)).sum(axis=-1) / speed
             pred = torch.round(dur).clamp(min=1).long().squeeze(0)
+            for i, frames in (hold or {}).items():
+                pred[i + 1] = frames  # token 0 is the start pad
             idx = torch.repeat_interleave(torch.arange(L, device=m.device), pred)
             aln = torch.zeros((L, idx.shape[0]), device=m.device)
             aln[idx, torch.arange(idx.shape[0])] = 1

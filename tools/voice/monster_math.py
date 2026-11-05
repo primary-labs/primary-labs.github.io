@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Primary Labs · Monster Math — make the default-voice clips with Kokoro-82M.
 
-    python monster_math.py --out DIR [--voice af_heart] [--speed 0.9] [--only ID,ID,...]
-    python monster_math.py --out DIR --review [--only ID,ID,...]     check existing clips again
+    python monster_math.py [--out DIR] [--voice af_heart] [--speed 0.9] [--only ID,ID,...]
+    python monster_math.py [--out DIR] --review [--only ID,ID,...]     check existing clips again
+
+DIR defaults to ~/Documents/Primary Labs audio/runs/monster-math, the same folder every time, so --only
+finds the last full run. Models come from the local cache (engine.find_model); runs never go online.
 
 Every line comes from labs/monster-math/tools/list-phrases.js, the same list the page uses, so new
 lines are picked up automatically. Lines go through Kokoro's dictionary: Monster Math has no letter
@@ -35,7 +38,7 @@ manifest.json and listed when the run ends, for a person to listen to. The READM
 check did on known-bad clips.
 
 Writes:
-    DIR/<voice>/phrases/<id>.mp3    what ships: 64 kbps mono, copy into
+    DIR/<voice>/phrases/<id>.mp3    what ships: 96 kbps mono, copy into
                                     labs/monster-math/assets/audio/phrases/
     DIR/<voice>/wav/<id>.wav        24 kHz 16-bit masters
     DIR/<voice>/manifest.json       text, phonemes, what was heard, check results, every take tried
@@ -709,8 +712,8 @@ def make_take(eng, voice, ps, how, speed, seed):
     return normalize(clip), cuts
 
 
-SPEED = 0.9      # Kokoro speed: a little slower than Letter Chains, for kindergarten
-MP3_LEVEL = 0.6  # libsndfile constant-bitrate setting that gives 64 kbps for 24 kHz mono
+SPEED = 0.9  # Kokoro speed: a little slower than Letter Chains, for kindergarten
+RUN_NAME = 'monster-math'  # the run folder under engine.RUNS (Story Puzzles sets its own)
 
 
 def load_phrases():
@@ -731,8 +734,9 @@ class Whisper:
     """Writes down the words it hears (openai/whisper-small.en, MIT)."""
     def __init__(self, name):
         from transformers import pipeline
+        from engine import WHISPER, find_model
         self.name = name
-        self.asr = pipeline('automatic-speech-recognition', model=name, device='cpu')
+        self.asr = pipeline('automatic-speech-recognition', model=find_model(name, WHISPER[1]), device='cpu')
 
     def __call__(self, x, sr):
         import qa
@@ -743,9 +747,9 @@ class Phones:
     """Writes down the sounds it hears (facebook/wav2vec2-lv-60-espeak-cv-ft, Apache-2.0)."""
     def __init__(self, name):
         import qa
-        from huggingface_hub import snapshot_download
+        from engine import W2V2, find_model
         self.name = name
-        self.rec = qa.W2V2(snapshot_download(name, allow_patterns=['*.json', 'pytorch_model.bin']))
+        self.rec = qa.W2V2(find_model(name, W2V2[1]))
 
     def listen(self, x, sr):
         """Log-probabilities per 20 ms frame, for decoding and for finding where each sound is."""
@@ -826,7 +830,7 @@ def set_checks(manifest, vdir):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--out', required=True)
+    ap.add_argument('--out', help='run folder (default: ~/Documents/Primary Labs audio/runs/%s)' % RUN_NAME)
     ap.add_argument('--voice', default='af_heart', help='a Kokoro voice; the checks were tuned on af_heart')
     ap.add_argument('--speed', type=float,
                     help='default %s, a little slower than Letter Chains, for kindergarten. --only and --review keep '
@@ -842,7 +846,8 @@ def main():
         ap.error('--tries must be at least 1')
 
     import soundfile as sf
-    from engine import MS, POST_PAD_MS, PRE_PAD_MS, SR, Kokoro, padded, seed_for, sha, version, write
+    from engine import KBPS, MS, POST_PAD_MS, PRE_PAD_MS, SR, Kokoro, padded, run_dir, seed_for, to_mp3, version, write
+    args.out = args.out or run_dir(RUN_NAME)
 
     phrases = load_phrases()
     order_of = {p['id']: i for i, p in enumerate(phrases)}
@@ -871,7 +876,7 @@ def main():
                 'versions': {p: version(p) for p in ['kokoro', 'misaki', 'torch', 'numpy', 'transformers',
                                                      'praat-parselmouth', 'pyloudnorm', 'soundfile']},
                 'recognizers': {'words': args.whisper, 'sounds': args.phones},
-                'settings': {'speed': SPEED if args.speed is None else args.speed, 'tries': args.tries, 'mp3_kbps': 64,
+                'settings': {'speed': SPEED if args.speed is None else args.speed, 'tries': args.tries, 'mp3_kbps': KBPS,
                              'min_hnr_db': MIN_HNR_DB},
                 'clips': []}
     by_id = {c['id']: c for c in old['clips']} if old else {}
@@ -936,18 +941,14 @@ def main():
             wav = os.path.join(vdir, 'wav', p['id'] + '.wav')
             mp3 = os.path.join(vdir, 'phrases', p['id'] + '.mp3')
             wav_sha = write(wav, clip)
-            os.makedirs(os.path.dirname(mp3), exist_ok=True)
-            sf.write(mp3, padded(clip), SR, format='MP3', bitrate_mode='CONSTANT', compression_level=MP3_LEVEL)
-            back, _ = sf.read(mp3, dtype='float32')
-            if abs(len(back) - len(padded(clip))) > SR // 10:
-                c['reasons'].append('MP3 length differs from the master')
+            mp3_sha = to_mp3(wav, mp3, KBPS)  # checks the bitrate and length
             by_id[p['id']] = {'id': p['id'], 'text': p['text'], 'kokoro': ps,
                               'status': 'check' if c['reasons'] else 'pass', 'reasons': c['reasons'],
                               'heard': c['heard'], 'sounds': c['sounds'], 'vowels': c['vowels'], 'hnr_db': c['hnr_db'],
                               'hygiene': c['hygiene'],
                               'try': t + 1, 'how': c['how'], 'seed': seed, 'speed': c['speed'], 'cuts': c['cuts'],
                               'duration_s': round(len(padded(clip)) / SR, 3),
-                              'sha256_wav': wav_sha, 'sha256_mp3': sha(mp3), 'tries': tried}
+                              'sha256_wav': wav_sha, 'sha256_mp3': mp3_sha, 'tries': tried}
             show(by_id[p['id']])
 
     for cid, entry in by_id.items():

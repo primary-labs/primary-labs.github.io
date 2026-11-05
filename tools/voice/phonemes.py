@@ -254,6 +254,59 @@ for _s in SOUNDS:
 for _s in SOUNDS:
     if _s['id'] in ('d', 'b'):
         _s['trace_options'] = [35, 50, 65]
+# More ways to make the sounds the owner heard as wrong on 2026-11-04 (an echo in the short vowels and ng;
+# v, z, r, w and oi wrong; h and j too short), so the best take of each way can be compared by ear:
+#   '+cN'   Kokoro holds sound c itself for N frames (25 ms each) in a word said at normal speed
+#   alone   the vowel said on its own ("ah", "eh", "uh") at normal speed
+#   normal  the usual words at normal speed, so less of the sound comes from slowing Kokoro down
+# v, z and r come from the start of a word, where Kokoro voices them (it devoices a final v or z, and
+# the old r came from "er", a vowel).
+NEW_WAYS = {
+    'a': ['hˈæd+æ6', 'hˈæd+æ8', 'pˈæp+æ8', 'hˈæd', 'pˈæp', 'ˈæ', 'ˈæː'],
+    'e': ['hˈɛd+ɛ6', 'hˈɛd+ɛ8', 'pˈɛp+ɛ8', 'hˈɛd', 'pˈɛp', 'ˈɛ', 'ˈɛː'],
+    'i': ['hˈɪd+ɪ6', 'hˈɪd+ɪ8', 'pˈɪp+ɪ8', 'hˈɪd', 'pˈɪp', 'ˈɪ'],
+    'o': ['hˈɑd+ɑ6', 'hˈɑd+ɑ8', 'pˈɑp+ɑ8', 'hˈɑd', 'pˈɑp', 'ˈɑ', 'ˈɑː'],
+    'u': ['tˈʌb+ʌ6', 'tˈʌb+ʌ8', 'kˈʌt+ʌ8', 'tˈʌb', 'kˈʌt', 'ˈʌ'],
+    'ng': ['sˈɪŋ', 'kˈɪŋ', 'sˈʌŋ', 'ɹˈɪŋ'],  # Kokoro won't hold ng: held, its voicing dies out
+    'v': ['vˈæn+v8', 'vˈæn+v12', 'vˈɛt+v10', 'vˈɪm+v10', 'vˈʌn+v10'],
+    'z': ['zˈɪp+z8', 'zˈɪp+z12', 'zˈu+z10', 'zˈæp+z10'],
+    'r': ['ɹˈɛd+ɹ8', 'ɹˈɛd+ɹ12', 'ɹˈʌn+ɹ10', 'ɹˈɪp+ɹ10', 'ɹˈæt+ɹ10'],
+    'j': ['ʤˈɑb@0.8', 'ʤˈɑb@0.65', 'ʤˈɛt@0.8', 'ʤˈʌɡ@0.8'],
+}
+for _s in SOUNDS:
+    _s['sources'] = _s['sources'] + [x for x in NEW_WAYS.get(_s['id'], []) if x not in _s['sources']]
+    if _s['id'] == 'j':
+        _s['trace_options'] = [70, 90, 110]  # more of the vowel of "job": a longer /j/
+        _s['length_ms'] = (40, 260)
+    if _s['id'] == 'w':
+        _s['trace_options'] = [30, 60]  # more of the move into the vowel
+# Round 2: the owner heard none of the takes of ng, h, v and r as right (z not answered yet). Stretching to
+# 280-320 ms may be the trouble, so these also come shorter (length_options, cut option '=N'); v and z
+# also come with more hiss (boost_options, '^N': Kokoro's v has little); r also from the middle of a word.
+for _s in SOUNDS:
+    if _s['id'] in ('ng', 'v', 'z', 'r'):
+        _s['length_options'] = [200, 250]
+    if _s['id'] in ('v', 'z'):
+        _s['boost_options'] = [6, 12]
+    if _s['id'] == 'h':
+        _s['length_options'] = [160, 220]
+    if _s['id'] == 'r':
+        _s['sources'] += ['ˈɛɹə+ɹ10', 'ˈɑɹə+ɹ10', 'ɹˈɛd+ɹ14', 'ɹˈʌn+ɹ14']
+# Round 3: still no ng the owner hears as right. A lone nasal hum barely says where the tongue is, so ng
+# also keeps 40-100 ms of the vowel before it ('~N', like /g/ and /j/ keep the vowel after), comes shorter
+# or unstretched ('=0'), and is cut from words at normal speed: their hum is only 70-115 ms, which used to
+# be too short to use, so every ng take came from a word slowed to 0.35-0.45x and stretched hard.
+for _s in SOUNDS:
+    if _s['id'] == 'ng':
+        _s['trace_options'] = [40, 70, 100]
+        _s['length_options'] = [0, 150, 200, 250]  # 0: as long as Kokoro said it, not stretched
+        # the vowel before and no stretching at once: the first try ZIPA heard as ng ("sɪŋk")
+        _s['option_sets'] = [{'trace_ms': t, 'target_ms': n} for t in (40, 70, 100) for n in (0, 200)]
+        _s['sources'] += [x for x in ['θˈɪŋ', 'bˈæŋ', 'lˈʌŋ', 'wˈɪŋ', 'sˈɪŋ@0.8', 'kˈɪŋ@0.8', 'bˈæŋ@0.8']
+                          if x not in _s['sources']]
+SHORT_MS['breath'] = 280  # /h/: the breath before a vowel, continued with matching noise
+BREATH_KEEP_MS = 70  # ...from its first 70 ms: later in the breath, Kokoro's voicing has started
+
 # Long and other vowels: other ways to say them on their own, tried when no take of the first is clean.
 # 'ː' holds the vowel longer; 'ʔ' starts it with a catch, so "oo" can't slide in from a "y" ("you").
 WHOLE_MORE = {
@@ -261,6 +314,44 @@ WHOLE_MORE = {
     'oo': ['ʔˈu', 'ˈuː', 'ʔˈuː'], 'ow': ['ˈWː', 'ʔˈW'], 'oi': ['ˈYː', 'ʔˈY'], 'ar': ['ˈɑːɹ', 'ʔˈɑɹ'],
     'or': ['ˈɔːɹ', 'ʔˈɔɹ'], 'er': ['ˈɜːɹ', 'ʔˈɜɹ', 'ˈɚ'],
 }
-# Whole vowels picked by ear: name -> the one take to make (letter_chains.WORD_TAKES kind).
-# /ow/: the owner heard the first pick as wrong although both recognizers passed it.
-WHOLE_PICKED = {'ow': 'dot2'}
+WHOLE_MORE['oi'] += ['ˈɔɪ', 'ʔˈɔɪ', 'ˈɔːɪ']  # oi written as its two sounds: the owner heard ˈY as wrong
+
+# Other ways to write a word or keyword for Kokoro, tried when no take passes (and always with --all-takes).
+# A pick of one (PICKED, e.g. 'words/cake': 'kʰeɪk_iso') is also used in the word's sentence.
+# cake: as kˈAk both recognizers and the owner heard "take" on every take; an aspirated k (kʰ) with long a
+# written as its two sounds is heard as k by both.
+WORD_MORE = {
+    'cake': ['kʰˈeɪk', 'kʰˈAːk'],
+}
+# Takes picked by ear: clip id -> the one take to make. Words, keywords and whole vowels name a take
+# kind (letter_chains.WORD_TAKES, e.g. 'dot2'); letter sounds cut from a word name their source ('dˈʌt',
+# 'ˈæd#2' for the second seed, 'dˈʌt~50' to keep 50 ms of the vowel, as /g/ does). The owner picks on a
+# run's listen.html, and `letter_chains.py --pick` ships that exact take and prints the line to add here,
+# so later runs make the same take. Smoothed sounds (vowels, n, m, ng, v, z, l, r) come out slightly
+# different on each run; the masters keep the exact audio. /g/ and /j/ are pinned in their specs above.
+PICKED = {
+    # /ow/: the owner heard the first pick as wrong although both recognizers passed it.
+    'sounds/ow': 'dot2',
+    # Picked by the owner on 2026-11-04, after hearing an echo in the first short vowels and f, th, sh
+    # (hisses now continue with matching noise instead of joined copies), and h, j, w, oi as wrong.
+    'sounds/a': 'hˈæd',                # "had" at normal speed
+    'sounds/i': 'hˈɪd+ɪ8',             # held by Kokoro
+    'sounds/o': 'hˈɑd@0.6',
+    'sounds/e': 'pˈɛp@0.35#3',
+    'sounds/u': 'tˈʌb@0.6#3',
+    'sounds/sh': 'fˈɪʃ@0.45#3',
+    'sounds/f': 'ɹˈif@0.45#2',
+    'sounds/th': 'bˈæθ@0.45#3',
+    'sounds/j': 'ʤˈɛt@0.8~110',        # longer: 110 ms of the vowel of "jet"
+    'sounds/w': 'wˈɪn@0.5#3~60',       # more of the glide
+    'sounds/oi': 'ɔɪ_iso',             # written as its two sounds, said alone
+    'words/cake': 'kʰA:k_iso',         # as kˈAk it was heard as "take"
+    'keywords/cake': 'pause',
+    # Round 2 (2026-11-04): the first new takes of h, v and r still sounded wrong to the owner.
+    'sounds/h': 'hˈɪt@0.5#2',          # whispered breath, 280 ms
+    'sounds/v': 'vˈæn+v8=200',         # held by Kokoro at the start of "van", 200 ms
+    'sounds/z': 'zˈɪp+z8',             # held by Kokoro at the start of "zip"
+    'sounds/r': 'ɹˈæt+ɹ10',            # held by Kokoro at the start of "rat", not "er"
+    # Round 4: no ng was right until it kept the vowel before it (100 ms of "sing"), 200 ms long.
+    'sounds/ng': 'sˈɪŋ@0.45#3~100=200',
+}
