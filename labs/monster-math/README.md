@@ -30,7 +30,7 @@ Every spoken line has an id in `js/phrases.js` (for example `problem-add-3-2` â†
 
 **The clips are computer-generated**, with the "Heart" voice of Kokoro-82M, the same open-source voice model (Apache-2.0) as Letter Chains. They were made ahead of time, and each one was checked automatically: one recognizer had to hear exactly the words of its line, a second one exactly its sounds (so "six" can't sound like "sex"), and further checks look for glitches such as a stray pause or the sound cutting out. No AI runs in the browser. `../../tools/voice/README.md` explains how. Don't use macOS voices: Apple allows them for personal use only.
 
-- After adding or changing a line in `js/phrases.js`, make its clip with `../../tools/voice/monster_math.py --only <id>` in the folder of a full run (see its README), copy the MP3 into `assets/audio/phrases/`, and run `node tools/build-audio.js`. The tests fail until every line has a clip.
+- After adding or changing a line in `js/phrases.js`, make its clip with `../../tools/voice/monster_math.py --only <id>` (see its README, or the `voice` skill), copy the MP3 into `assets/audio/phrases/`, and run `node tools/build-audio.js`. The tests fail until every line has a clip, and every clip is a 96 kbps MP3.
 - `node tools/list-phrases.js` prints every id and its text as JSON. The voice tool reads this.
 - `node tools/list-phrases.js --readme` rewrites `assets/audio/README.md`, the clip list.
 - `node tools/build-audio.js` wraps each clip in a `.js` file (the security policy, `connect-src 'none'`, stops scripts from downloading files) and updates `assets/audio/index.js`, the list of clips that exist. Only the `.js` files need to be deployed.

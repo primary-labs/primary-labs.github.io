@@ -96,9 +96,9 @@ Monster Math's checks on every line: one recognizer had to hear exactly the word
 one its sounds, and further checks look for glitches. Short o is forced to the "ah" of dot everywhere
 (dog, log, frog, on, off), so dog and dot share a vowel. No AI runs in the browser.
 
-- After changing a line, make its clip with `../../tools/voice/story_puzzles.py --only <id>` in the
-  folder of a full run (see its README), copy the MP3 into `assets/audio/phrases/`, and run
-  `node tools/build-audio.js --from <run>/af_heart/manifest.json`. That records the text each clip was
+- After changing a line, make its clip with `../../tools/voice/story_puzzles.py --only <id>` (see its
+  README, or the `voice` skill), copy the MP3 into `assets/audio/phrases/`, and run
+  `node tools/build-audio.js --from "$HOME/Documents/Primary Labs audio/runs/story-puzzles/af_heart/manifest.json"`. That records the text each clip was
   made from in `assets/audio/made-from.json`. The tests fail until every line has a clip that says
   the line as it reads now.
 - `node tools/list-phrases.js` prints every id and its text as JSON. The voice tool reads this.
