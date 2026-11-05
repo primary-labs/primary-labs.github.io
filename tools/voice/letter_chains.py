@@ -7,8 +7,8 @@
 
 DIR defaults to ~/Documents/Primary Labs audio/runs/letter-chains, the same folder every time. Both
 recognizers (ZIPA and wav2vec2-espeak) come from the local model cache and are required; a missing one
-stops the run with the command that downloads it. Each run writes DIR/<voice>/listen.html: every letter
-sound it made and every word it flagged, the lab's live clip first, then every take, for picking by ear.
+stops the run with the command that downloads it. Each run writes DIR/<voice>/listen.html: every clip
+still waiting for the owner's ear, across runs, the lab's live clip first, then up to LISTEN_TAKES takes.
 
 Words, keywords and letter sounds are made from exact phoneme strings, never from spelling: each word
 is a list of tiles from the lab (tools/content.js), and each tile says one sound (see phonemes.py). Sentences go through Kokoro's dictionary, with the lesson word (and "on") forced to the
@@ -16,16 +16,16 @@ same phonemes as its word clip; a word the dictionary doesn't know stops the bui
 
 Each word is said several ways (alone, with a full stop or "!", a little faster or slower, and as a
 fallback cut out of "The word is ..."). Every take is checked, and the one kept is the one with the
-fewest problems: first no hard problems (whispered, clipped, leftover sound from the carrier), then
-the fewest phoneme problems, then the best recognizer and acoustic score. Letter sounds are cut out
-of words said by the same voice.
+fewest problems: first the fewest hard problems (whispered, clipped, leftover sound from the carrier),
+then both recognizers happy, then the fewest phoneme problems, then the best recognizer and acoustic
+score. Letter sounds are cut out of words said by the same voice.
 
 Writes, for each voice (each clip as a WAV master and the MP3 the lab ships, see MP3_KBPS):
     DIR/<voice>/words/<word>.wav          every word a chain can use
     DIR/<voice>/keywords/<keyword>.wav    apple, igloo, octopus, ...
     DIR/<voice>/sentences/<word>.wav      the sentence for each word that has one
     DIR/<voice>/sounds/<name>.wav         the letter sound, e.g. sounds/t.wav is /t/, sounds/sh.wav /ʃ/
-    DIR/<voice>/sounds/<letter>-long.wav  held version of a, i, o and n, for blending
+    DIR/<voice>/sounds/<letter>-long.wav  held version of a short vowel or nasal (WAV only, not used yet)
     DIR/<voice>/manifest.json             targets, which take was kept, check results, notes
     DIR/<voice>/listen.html               this run's letter sounds and flagged clips, to pick by ear
 and every take that was tried under DIR/takes/<voice>/.
@@ -57,7 +57,7 @@ import qa  # noqa: E402
 from engine import (MS, PEAK, POST_PAD_MS, PRE_PAD_MS, SR, TARGET_LUFS, Kokoro, edges_of, env, fade,  # noqa: E402
                     normalize, padded, seed_for, sha, trim, to_mp3, version, write)
 
-# The lab ships MP3 (engine.KBPS): letter sounds get more bits, since short bursts and hisses lose their edge.
+# The lab ships MP3 (engine.KBPS_SOUNDS, engine.KBPS): letter sounds get more bits, since short bursts and hisses lose their edge.
 MP3_KBPS = {'sounds': E.KBPS_SOUNDS, 'keywords': E.KBPS, 'words': E.KBPS, 'sentences': E.KBPS}
 
 STOP_BELOW_VOWELS_DB = 8.0
@@ -1587,7 +1587,7 @@ def main():
     ap.add_argument('--all-takes', action='store_true',
                     help='make every take, even after one passes the checks, to pick by ear')
     ap.add_argument('--new-only', action='store_true',
-                    help='skip clips the lab already ships (assets/audio/<group>/<name>.wav)')
+                    help='skip clips the lab already ships (assets/audio/<group>/<name>.mp3)')
     ap.add_argument('--device', default='cpu')
     args = ap.parse_args()
     args.out = args.out or E.run_dir('letter-chains')

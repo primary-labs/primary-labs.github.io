@@ -12,6 +12,6 @@ transformers==5.20.2
 huggingface_hub==2.3.0
 spacy==3.8.16
 en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
-# Optional: the phoneme recognizers used by the checks (--zipa, --w2v2)
+# ZIPA, one of the two phoneme recognizers letter_chains.py requires (wav2vec2 runs on transformers)
 onnxruntime==1.31.0
 lhotse==1.33.0

@@ -17,7 +17,7 @@ phonemes.py            Letter Chains' exact phonemes, and the takes picked by ea
 monster_math.py        Monster Math: every spoken line
 story_puzzles.py       Story Puzzles: every spoken line, through Monster Math's pipeline
 save_masters.py        zips the WAV masters of the clips a lab ships
-spectrogram.py         spectrograms of clips as one PNG, to look at a sound (numpy only)
+spectrogram.py         spectrograms of clips as one PNG, to look at a sound (numpy and soundfile only)
 test_*.py              tests: python -m unittest
 requirements.txt       pinned versions
 ```
@@ -35,7 +35,7 @@ The steps for making, checking and shipping clips are in the `voice` skill
   never come out the same twice, so these are the only way back to the exact audio.
 - **Models** come only from the local Hugging Face cache, and runs never go online. A missing model stops
   the run with the `hf download` command that fetches it.
-- **Bitrate**: every lab ships MP3, letter sounds at 128 kbps and everything else at 96 (`engine.KBPS`).
+- **Bitrate**: every lab ships MP3, letter sounds at 128 kbps and everything else at 96 (`engine.KBPS_SOUNDS`, `engine.KBPS`).
 
 ## Set up
 
@@ -51,10 +51,11 @@ python -m unittest     # tests
 Runs don't download anything. Fetch the models once (about 2.6 GB in all):
 
 ```sh
-hf download hexgrad/Kokoro-82M --include config.json kokoro-v1_0.pth voices/af_heart.pt
-hf download anyspeech/zipa-small-crctc-500k --include model.onnx tokens.txt      # CC BY 4.0
-hf download facebook/wav2vec2-lv-60-espeak-cv-ft --include '*.json' pytorch_model.bin
-hf download openai/whisper-small.en --include '*.json' '*.txt' model.safetensors  # Monster Math, Story Puzzles
+hf download hexgrad/Kokoro-82M --include config.json --include kokoro-v1_0.pth --include voices/af_heart.pt
+hf download anyspeech/zipa-small-crctc-500k --include model.onnx --include tokens.txt      # CC BY 4.0
+hf download facebook/wav2vec2-lv-60-espeak-cv-ft --include '*.json' --include pytorch_model.bin
+hf download openai/whisper-small.en --include '*.json' --include '*.txt' --include model.safetensors
+# (Whisper: Monster Math, Story Puzzles, letter_chains.py --review)
 ```
 
 ## Letter Chains
@@ -92,12 +93,12 @@ Words, keywords and letter sounds are made from exact phoneme strings, never fro
   - Vowels and /n/ come from the steadiest part of the sound inside a word, lengthened with Praat's
     PSOLA into a short version (380 ms for vowels, 320 ms for /n/, plus a little silence at each end)
     and a held 700 ms version (not used by the lab yet), with a gentle one-semitone pitch fall. The
-    source words are said slower (down to 0.35x), at normal speed, or held by Kokoro, or the vowel is
+    source words are said slower (down to 0.3x), at normal speed, or held by Kokoro, or the vowel is
     said on its own ("ah"). The owner heard an echo in the first short vowels, all from slowed words, so
     the listen page offers the best take of each way.
   - **Cut options** reuse a source word: `~N` keeps N ms more (of the vowel after a stop, of a glide), `=N`
     makes the sound N ms long, `^N` adds N dB of hiss (v, z). They come from `trace_options`,
-    `length_options` and `boost_options` in a sound's spec, and appear in take names (`vˈæn+v8=200^6`).
+    `length_options` and `boost_options` in a sound's spec, and appear in take names (`vˈæn+v8=200`).
     ng, v, z and r also come 200 and 250 ms long, since stretching to 320 ms may be what the owner heard
     as wrong; v and z also come with 6 and 12 dB more hiss (Kokoro's v has little). `=0` keeps a sound as
     long as Kokoro said it, not stretched. `option_sets` applies several at once (`sˈɪŋ~70=0`).
@@ -122,7 +123,7 @@ be remade with `--names` like every other sound. The rest of the tile set needs 
 alone either. Two things shape how they're made:
 
 - Kokoro's own timing runs late, and slow speeds mostly add silence: a final v, z or l is 80-150 ms
-  at any speed. So sounds are found in the audio itself, from words said at 0.5-1.0x speed.
+  at any speed. So sounds are found in the audio itself, from words said at 0.3-1.0x speed.
 - On their own, hissing sounds (f, th, h, v, z) are heard as nothing by both recognizers, so for
   those the recognizers only rank takes and the acoustic checks decide.
 
@@ -133,7 +134,7 @@ alone either. Two things shape how they're made:
 | p, b | as t and d | as t and d |
 | s, sh, f, th | the steady hiss of a word-final sound (unvoiced, strong high frequencies), 340 ms. If shorter, the real hiss continues into new noise with the same spectrum (`hiss_extend`): joining copies of the hiss repeated every 100 ms or so, which the owner heard as an echo. s and sh sit 5 dB below the vowel sounds, f and th 9 dB | voicing (a buzz or an "uh"), s too low or sh too high in pitch, length |
 | h | the first 70 ms of the breath before the vowel (later in the breath Kokoro's voicing has started, heard as "hih"), continued to 280 ms with noise shaped like the whole breath, smoothed so it keeps the vowel's color without its pulses (a whispered "hhh"). Also 160 and 220 ms long. 12 dB below the vowels | voicing, length |
-| v, z, l, r | the steady part, held to 320 ms. v, z and r also come from the start of a word held by Kokoro (`vˈæn+v10`, `zˈɪp+z10`, `ɹˈɛd+ɹ10`): Kokoro devoices a final v or z (the old v was heard as f), and r from "er" is a vowel. v and z are lengthened in two bands: the buzz with PSOLA, the hiss with matching noise (PSOLA alone smears the hiss into a hum; joining copies left seams). l and r use PSOLA | voicing, dropouts, sounding mechanical, a stretch over 2.5x |
+| v, z, l, r | the steady part, held to 320 ms. v, z and r also come from the start of a word held by Kokoro (`vˈæn+v8`, `zˈɪp+z8`, `ɹˈæt+ɹ10`): Kokoro devoices a final v or z (the old v was heard as f), and r from "er" is a vowel. v and z are lengthened in two bands: the buzz with PSOLA, the hiss with matching noise (PSOLA alone smears the hiss into a hum; joining copies left seams). l and r use PSOLA | voicing, dropouts, sounding mechanical, a stretch over 2.5x |
 | ch, j | like a stop, with a longer release (ch up to 190 ms), 5 dB below the vowels. j keeps 50 ms of the vowel of "job" (`trace_ms`), as /g/ does: with the release alone, both recognizers heard /ch/. The owner asked for a longer j, so it is also cut from slower words with 70-110 ms of the vowel (`trace_options`) | as t and d |
 | qu, x, nk | cut out of a word: qu from the k burst to where the vowel takes over ("quiz"), x from the k burst to the end of the s ("fox"), nk from the ng hum to the end of the k ("junk") | length, an "uh" after, both recognizers |
 | w, y | from where voicing starts to where the vowel takes over (F2 halfway to the vowel's), not stretched, so there is very little vowel. w is also cut 30 and 60 ms later (`trace_options`): the owner heard the first w as wrong | voicing, length, both recognizers |
@@ -160,7 +161,7 @@ after it (an "uh" after a stop, the "y" of "you" before oo, an "l" left from the
 from). ZIPA alone hears an extra sound around almost any lone sound, so an extra sound only counts when
 both hear one. A few habits of each recognizer on this voice don't count (`qa.ACCEPT`): ZIPA writes
 /ʌ/ and /ɑ/ as "a", both hear /ʌ/ as /ɑ/, wav2vec2 almost never writes /æ/, and an r after a vowel is
-often folded into it. Takes both recognizers are happy with always rank first. When no take is clean,
+often folded into it. After hard problems, takes both recognizers are happy with rank first. When no take is clean,
 words get a third round with other random seeds, long vowels are also said other ways
 (`phonemes.WHOLE_MORE`: held with "ː", or started with a catch "ʔ" so oo can't start with a "y"),
 and letter sounds have more source words, each with three seeds (`phonemes.MORE_SOURCES`). /d/ and /b/
@@ -168,7 +169,7 @@ may also keep the start of the vowel, as /g/ does, if that is what the recognize
 
 Recognizers have known biases on this audio, so their scores also rank takes; the other phoneme
 problems above are only raised when both agree. Vowels are only compared where both are reliable: /ɪ/, /ɑ/, and the long
-vowels, vowel pairs and r-vowels (/ɛ/, /ʌ/ and /i/ are checked by their formants instead). Words with
+vowels, vowel pairs and r-vowels (/æ/, /ɛ/, /ʌ/, /i/ and /u/ are checked by their formants instead). Words with
 the full tile set are said alone three ways first; the slower, faster and carrier takes are tried
 only when none of those three is clean. Sentences are checked only at their edges. Clips with any problem are
 marked `check` in `manifest.json`, with the reasons. Each voice's manifest also lists which vowel
@@ -190,8 +191,8 @@ shown again, so the next page offers four others.
 MP3) and prints the lines to add to `PICKED` in `phonemes.py`, so later runs make the same take: a take
 kind for words, keywords and whole vowels (`'words/pin': 'dot2'`), the source for a cut letter sound
 (`'sounds/d': 'dˈʌt~50'`). Picked and kept clips leave the page; the rest stay. Smoothed sounds (vowels,
-n, m, ng, v, z, l, r) come out slightly different on each run; the masters keep the exact audio. /g/ and
-/j/ are pinned in their specs instead.
+n, m, ng, v, z, l, r) come out slightly different on each run; the masters keep the exact audio. /g/ is
+pinned in its spec instead, and /j/ in `PICKED`.
 
 `--review` checks the clips the lab ships now with the same checks, without making anything: what
 both recognizers hear and every problem, printed and saved as `review.json`. For real words and
@@ -229,7 +230,7 @@ Output for each voice: `words/`, `keywords/`, `sentences/` (same names as the la
 tried is kept under `takes/` for comparison.
 
 Each clip is saved twice: a WAV master and the MP3 the lab ships, letter sounds at 128 kbps and
-everything else at 96 (`engine.KBPS`). At 64 kbps, which Monster Math and Story Puzzles used at first,
+everything else at 96 (`engine.KBPS_SOUNDS`, `engine.KBPS`). At 64 kbps, which Monster Math and Story Puzzles used at first,
 stops picked up a smear just before their burst: the c, t and ch sounds, and the first sound of about
 1 in 10 words like "keep". To ship a take from `takes/`, use `--pick`.
 

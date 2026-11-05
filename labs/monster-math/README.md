@@ -41,7 +41,7 @@ Every spoken line has an id in `js/phrases.js` (for example `problem-add-3-2` â†
 node --test labs/monster-math/test/
 ```
 
-They check problem generation (ranges, answer choices, no repeats), that every line has a phrase and every phrase has a clip, the audio tools, and the control icons. The site's security and design rules are checked for every page by `node --test test/` at the repo root.
+They check problem generation (ranges, answer choices, no problem twice in a row), that every line has a phrase and every phrase has a clip, the audio tools, and the control icons. The site's security and design rules are checked for every page by `node --test test/` at the repo root.
 
 ## Files
 

@@ -44,15 +44,16 @@ cd tools/voice && source .venv/bin/activate     # then plain `python`; or call .
   `c.a_e.k`). Their sounds come from the tiles, never from spelling: c and g are hard, short o is the
   "ah" of dot, and made-up words follow the same rules ("cit" is /kɪt/). A new tile needs a sound in
   `phonemes.SOUNDS` (or `WHOLE_VOWELS`) and a keyword in `phonemes.KEYWORDS`.
-- **Story Puzzles: short o.** Every short-o word in a story (dog, log, on, off, hot, top...) needs an entry
-  in `FORCE` in `story_puzzles.py` with /ɑ/. The dictionary gives "aw", which would make dog and dot sound
-  different.
+- **Story Puzzles: short o.** Check each short-o word's `kokoro` in the manifest. The dictionary gives
+  most of them /ɑ/ (hot, box, pot), but some "aw" (dog, log, frog, on, off), which would make dog and dot
+  sound different. Add those to `FORCE` in `story_puzzles.py` with /ɑ/.
 - **Unknown words stop the build.** Add names to `FORCE` (Story Puzzles) or `SAY_AS` (Monster Math). Never
   work around the stop.
 - **Kokoro strings:** `ɡ` is U+0261 and the stress mark `ˈ` is U+02C8. A keyboard `g` is silently dropped,
   so the scripts refuse it.
-- **A k before long a can come out as t** ("cake" was heard as "take"). Kokoro hears an aspirated `kʰ`,
-  with long a written as `eɪ`: add the word to `phonemes.WORD_MORE` and let the owner pick.
+- **A k before long a can come out as t** ("cake" was heard as "take"). Add spellings with an aspirated
+  `kʰ` to `phonemes.WORD_MORE` (cake has `kʰˈeɪk` and `kʰˈAːk`), so the recognizers hear /k/, and let the
+  owner pick.
 - **Watch for:** "and" is said stressed, so it isn't heard as "in". One-word lines are cut from a carrier
   sentence automatically. "read" in "Let's read ..." must come out as `ɹˈid` in the manifest.
 - The recognizers often hear Heart's short i as short e even on good clips, and hear a lone f, th or h as
@@ -92,15 +93,15 @@ cd tools/voice && source .venv/bin/activate     # then plain `python`; or call .
    `length_options` (`=N`, N ms long: less stretching; `=0` as long as Kokoro said it, not stretched),
    `boost_options` (`^N`, N dB more hiss for v, z), or `option_sets` for several at once (`~70=0`).
    Before adding ways, check that the ones you have actually make takes: a source that gives no take is
-   silently skipped (ng's normal-speed words all were), so count the takes of each way in the manifest.
+   skipped without a message (ng's normal-speed words all were); the manifest marks it `no usable cut`.
    Remake and go back to step 3.
 6. Ship it (below): only the picked clips. "Keep the live clip" means copy nothing. A word picked
    written another way also needs its sentence remade: `--only sentences --names <word>`.
 
-Monster Math and Story Puzzles: `python monster_math.py --review --only ID` checks a clip in the run
-folder again; remake with `--only ID` and listen on that run's `listen.html`.
+Monster Math and Story Puzzles: `python monster_math.py --review --only ID` (or `story_puzzles.py`) checks
+a clip in the run folder again; remake with `--only ID` and listen on that run's `listen.html`.
 
-## What Kokoro can and can't do (learned the hard way)
+## What Kokoro can and can't do
 
 - It can't say a lone sound: every voice adds "uh". Sounds are cut from words.
 - Held with `+cN`, v, z and r stay voiced to about 200 ms; vowels start to fade past about 150 ms; ng
@@ -117,8 +118,8 @@ folder again; remake with `--only ID` and listen on that run's `listen.html`.
   --names <sound>,<keyword>` and its words. Changed sentences: `--only sentences --names <word>`.
   `--new-only` makes just the clips the lab doesn't ship yet. Letter sounds then need the owner's pick.
 - **Monster Math / Story Puzzles:** `python monster_math.py --only ID,ID` or `python story_puzzles.py --only
-  ID,ID`. The new clips are compared with the other lines in the same run folder. Inserting a line in
-  the middle renumbers every later id (`fat-cat-4` becomes `fat-cat-5`): remake each of them too
+  ID,ID`. The new clips are compared with the other lines in the same run folder. In Story Puzzles, inserting
+  a line in the middle renumbers every later id (`fat-cat-4` becomes `fat-cat-5`): remake each of them too
   (`node tools/list-phrases.js` in the lab lists ids and text).
 - Read the run's last lines: anything marked `check` needs a listen or a fix (a rewritten line, a `FORCE`
   entry) before it ships.
@@ -155,7 +156,7 @@ Every lab ships MP3 only: letter sounds at 128 kbps, everything else at 96. The 
 **Then, for every lab**
 - `cd tools/voice && python save_masters.py <lab>` zips the shipped WAV masters and the run record into
   `~/Documents/Primary Labs audio/masters/`.
-- Run the tests: `node --test test/ labs/<lab>/test/` from the repo root, and play the new clips in the lab
+- Run the tests: `node --test test/ labs/<lab folder>/test/` from the repo root, and play the new clips in the lab
   (`python3 -m http.server 8000` from the repo root, unless the owner's is already running).
 - Swapping clips for new MP3s at the same bitrate doesn't need the iPhone check in AGENTS.md; changing
   how audio is stored, loaded or played does.

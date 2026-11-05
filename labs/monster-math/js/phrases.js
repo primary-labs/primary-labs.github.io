@@ -1,5 +1,5 @@
 /* Primary Labs · Monster Math: everything the page says out loud.
-   Each phrase has an id (also its clip's file name, assets/audio/phrases/<id>.wav) and the text to
+   Each phrase has an id (also its clip's file name, assets/audio/phrases/<id>.mp3) and the text to
    say. Some also have "show", the same line written with digits for the screen.
    No page code here: tools/list-phrases.js and the tests read this file in Node. */
 (function (root) {

@@ -18,11 +18,11 @@ labs/letter-chaining/      Letter Chains: grade 1 phonics (window.PL)
 labs/monster-math/         Monster Math: K–1 add/subtract within 10 (window.MM)
 labs/story-puzzles/        Story Puzzles: grade 1 decodable stories with picture pieces (window.SP)
 tools/voice/               makes every lab's default voice clips with Kokoro (Python, build time only)
-test/                      site-wide checks for every page
+test/                      site-wide checks for every page, and the home page's lab list
 DESIGN.md                  the design language
 ```
 
-Each lab has its own `index.html`, `css/`, `js/`, `assets/`, `tools/`, and a `README.md`, and loads
+Each lab has its own `index.html`, `css/`, `js/`, `assets/`, `tools/`, `test/`, and a `README.md`, and loads
 the shared stylesheet, fonts, and favicon from the root `assets/`. Read the lab's README before changing it, and keep it up to
 date when behavior, files, or commands change.
 
@@ -66,7 +66,8 @@ The labs teach phonics, so audio must carry exactly the right sounds:
 
 - Letter sounds have no added "uh" (/t/, not "tuh"). C and g are always hard. Short o is the "ah" of
   dot, so dog and dot share a vowel. Nonsense words follow the same rules ("cit" is /kɪt/).
-- Playback order: teacher recording, then bundled clip, then the device voice as a last resort.
+- Playback order: teacher recording (Letter Chains only), then bundled clip, then the device voice as
+  a last resort.
 - Default clips for every lab are made with Kokoro-82M ("Heart" voice, `af_heart`) and checked
   automatically: Letter Chains from exact phoneme strings, Monster Math and Story Puzzles from the
   dictionary with word, sound and glitch checks (Story Puzzles forces short o to "ah"). A person listens only to the clips the checks can't clear,
@@ -90,10 +91,12 @@ cd tools/voice && .venv/bin/python -m unittest   # voice tool tests (needs its v
 - Microphone recording needs https or localhost.
 - Check changes in Safari on iPhone/iPad when touching audio: audio must start during a tap
   (`touchend`/`click`), and recordings are stored as ArrayBuffers, not Blobs, because iOS Safari
-  can't reliably read Blobs back from IndexedDB.
-- `test/site.test.js` checks every page for the security and design rules. Letter Chains' tests cover
-  its word list, chain builder, clip files (MP3, bitrates) and clip loading; test the activities by
-  hand in the browser.
+  can't reliably read Blobs back from IndexedDB. Swapping clips for new MP3s at the same bitrate
+  doesn't need this check.
+- `test/site.test.js` checks every page's security policy, inline code, outside URLs and linked files,
+  and that page CSS leaves the shared tokens and classes alone. It doesn't check motion, tap targets,
+  colors or layout. Each lab's README says what its own tests cover; test the activities by hand in
+  the browser.
 - After a visual change, look at each page at 390px and desktop widths and Tab through it.
 
 ## Adding a lab

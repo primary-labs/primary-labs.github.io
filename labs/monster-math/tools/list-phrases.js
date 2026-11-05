@@ -5,7 +5,7 @@
  *   node tools/list-phrases.js --readme     rewrites assets/audio/README.md (the clip list)
  *
  * The site's tools/voice/monster_math.py reads the JSON. Each clip is saved as
- * assets/audio/phrases/<id>.mp3 (or .wav), then wrapped with node tools/build-audio.js.
+ * assets/audio/phrases/<id>.mp3, then wrapped with node tools/build-audio.js.
  */
 'use strict';
 
@@ -35,8 +35,7 @@ function readme(list) {
     '',
     '## Replacing a clip',
     '',
-    '1. Save it as `phrases/<file>.mp3` or `.wav`, using the names below. If both exist, the MP3 is used,',
-    '   so delete the old MP3 when replacing it with a WAV.',
+    '1. Save it as a mono MP3 at 96 kbps, `phrases/<file>.mp3`, using the names below.',
     '2. Run `node tools/build-audio.js`. It wraps each clip in a `.js` file and updates `index.js`.',
     '3. Only the `.js` files need to be deployed.',
     '',

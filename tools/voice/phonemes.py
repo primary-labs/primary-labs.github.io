@@ -317,7 +317,7 @@ WHOLE_MORE = {
 WHOLE_MORE['oi'] += ['ˈɔɪ', 'ʔˈɔɪ', 'ˈɔːɪ']  # oi written as its two sounds: the owner heard ˈY as wrong
 
 # Other ways to write a word or keyword for Kokoro, tried when no take passes (and always with --all-takes).
-# A pick of one (PICKED, e.g. 'words/cake': 'kʰeɪk_iso') is also used in the word's sentence.
+# A pick of one (PICKED, e.g. 'words/cake': 'kʰA:k_iso') is also used in the word's sentence.
 # cake: as kˈAk both recognizers and the owner heard "take" on every take; an aspirated k (kʰ) with long a
 # written as its two sounds is heard as k by both.
 WORD_MORE = {
@@ -328,7 +328,7 @@ WORD_MORE = {
 # 'ˈæd#2' for the second seed, 'dˈʌt~50' to keep 50 ms of the vowel, as /g/ does). The owner picks on a
 # run's listen.html, and `letter_chains.py --pick` ships that exact take and prints the line to add here,
 # so later runs make the same take. Smoothed sounds (vowels, n, m, ng, v, z, l, r) come out slightly
-# different on each run; the masters keep the exact audio. /g/ and /j/ are pinned in their specs above.
+# different on each run; the masters keep the exact audio. /g/ is pinned in its spec above.
 PICKED = {
     # /ow/: the owner heard the first pick as wrong although both recognizers passed it.
     'sounds/ow': 'dot2',

@@ -1,7 +1,8 @@
 # Primary Labs design language
 
 Every page looks and behaves like Letter Chains, the lab people praised. This file holds the rules.
-The shared parts live in `assets/primary-labs.css`. `node --test test/` checks the rules a script can check.
+The shared parts live in `assets/primary-labs.css`. `node --test test/` checks the tokens, the shared button
+height, and that page CSS doesn't redefine tokens or restyle shared classes. Check the rest by hand.
 
 Design for students with disabilities and neurodivergent (ASD) learners: clear, predictable screens
 and calm surroundings matter more than visual flair.
@@ -23,7 +24,7 @@ and calm surroundings matter more than visual flair.
 6. **Motion only as feedback.** Things move because a child just did something, or to point at the
    next step. At most 0.6 seconds, no decorative loops, and off when the device asks for reduced motion.
 7. **Drawn icons for controls.** Buttons use simple SVG icons drawn in `currentColor` (speaker,
-   bell, play). Emoji are fine as pictures inside content (👾 Monsters, word pictures), not as
+   bell, play). Emoji are fine as pictures inside content (Letter Chains' word pictures), not as
    control icons. Emoji keep their own colors and can vanish on a selected button.
 
 Light theme only. Every page sets `<meta name="theme-color" content="#FFF8EC">`.
