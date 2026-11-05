@@ -81,7 +81,7 @@ names (`pip install ...`, `uv pip install ...`), not `.venv/bin/pip`.
 
 ```sh
 python3 -m http.server 8000        # from the repo root, then open http://localhost:8000
-node --test test/ labs/monster-math/test/ labs/story-puzzles/test/
+node --test test/ labs/monster-math/test/ labs/story-puzzles/test/ labs/letter-chaining/test/
 cd tools/voice && .venv/bin/python -m unittest   # voice tool tests (needs its venv)
 ```
 
@@ -89,8 +89,9 @@ cd tools/voice && .venv/bin/python -m unittest   # voice tool tests (needs its v
 - Check changes in Safari on iPhone/iPad when touching audio: audio must start during a tap
   (`touchend`/`click`), and recordings are stored as ArrayBuffers, not Blobs, because iOS Safari
   can't reliably read Blobs back from IndexedDB.
-- `test/site.test.js` checks every page for the security and design rules. Letter Chains has no other
-  automated tests; test it by hand in the browser.
+- `test/site.test.js` checks every page for the security and design rules. Letter Chains' tests cover
+  its word list, chain builder, clip files (MP3, bitrates) and clip loading; test the activities by
+  hand in the browser.
 - After a visual change, look at each page at 390px and desktop widths and Tab through it.
 
 ## Adding a lab

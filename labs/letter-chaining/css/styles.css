@@ -51,6 +51,9 @@ main { flex: 1; width: 100%; max-width: var(--page); margin: 0 auto; padding: 24
 .tile--md { --bank: 52px; border-radius: 14px; box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.22); }
 .tile--lg { --bank: 84px; border-radius: 20px; }
 .tile--inline { vertical-align: middle; margin: 0 4px; }
+/* Tiles with two or three letters (sh, ai, igh) keep the same square, with smaller letters. */
+.tile--n2 { font-size: calc(var(--bank) * 0.46); letter-spacing: -0.02em; }
+.tile--n3 { font-size: calc(var(--bank) * 0.38); letter-spacing: -0.03em; }
 
 .swatch { display: inline-block; width: 18px; height: 18px; border-radius: 6px; margin-right: 10px; vertical-align: -2px; }
 .swatch--vowel { background: var(--vowel); }
@@ -96,7 +99,7 @@ main { flex: 1; width: 100%; max-width: var(--page); margin: 0 auto; padding: 24
 
 .mini-word { display: inline-flex; gap: 3px; }
 .mini-letter {
-  display: inline-grid; place-items: center; width: 28px; height: 32px; border-radius: 8px;
+  display: inline-grid; place-items: center; min-width: 28px; height: 32px; padding: 0 3px; border-radius: 8px;
   font-weight: 700; font-size: 22px; line-height: 1; padding-bottom: 2px;
 }
 .mini-letter--vowel { color: var(--vowel); background: var(--vowel-soft); }
@@ -192,6 +195,30 @@ main { flex: 1; width: 100%; max-width: var(--page); margin: 0 auto; padding: 24
   color: #fff; transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .slot-empty { color: #CDBF9F; font-size: 0.6em; }
+.slot.tile--n2 { font-size: calc(var(--tile) * 0.46); }
+.slot.tile--n3 { font-size: calc(var(--tile) * 0.38); }
+
+/* Silent e: the vowel sits in the middle tile and its quiet e after the last tile. A matching
+   underline marks the two as one sound. */
+.slot.is-split::after {
+  content: ''; position: absolute; left: 30%; right: 30%; bottom: 18%; height: 5px; border-radius: 3px;
+  background: rgba(255, 255, 255, 0.85);
+}
+.slot-col--tail { margin-left: calc(clamp(10px, 2.5vw, 22px) * -0.4); }
+.slot-tail {
+  position: relative; display: grid; place-items: center;
+  width: calc(var(--tile) * 0.5); height: var(--tile); border-radius: 18px;
+  border: 3px dashed var(--vowel); background: var(--vowel-soft); color: var(--vowel);
+  font-family: var(--font); font-weight: 700; font-size: calc(var(--tile) * 0.48); line-height: 1; padding-bottom: 0.1em;
+  transition: transform 0.15s ease;
+}
+.slot-tail::after {
+  content: ''; position: absolute; left: 26%; right: 26%; bottom: 18%; height: 5px; border-radius: 3px;
+  background: var(--vowel);
+}
+.slot-tail.is-lit { transform: translateY(-8px) scale(1.06); outline: 5px solid var(--yellow); outline-offset: 4px; }
+.slot-label--tail { font-size: 13px; white-space: nowrap; }
+.mini-letter.is-split { box-shadow: inset 0 -3px 0 var(--vowel); }
 .slot--filled { border: 0; padding-bottom: 0.08em; }
 .slot--filled.tile--vowel { background: var(--vowel); box-shadow: inset 0 -8px 0 var(--vowel-dark); }
 .slot--filled.tile--consonant { background: var(--consonant); box-shadow: inset 0 -8px 0 var(--consonant-dark); }
@@ -261,6 +288,10 @@ main { flex: 1; width: 100%; max-width: var(--page); margin: 0 auto; padding: 24
 .bank-tile.tile--vowel { order: -1; }
 .bank.is-waiting .bank-tile { opacity: 0.55; }
 .bank-tile.is-glow { animation: glow 1.2s ease-in-out infinite; opacity: 1; }
+/* A class that has learned many letters gets smaller tiles, so they all fit on one screen. */
+.bank--many { gap: 8px; padding: 12px; --bank: clamp(50px, min(7vw, 9svh), 72px); }
+.bank--lots { gap: 6px; padding: 12px; --bank: clamp(48px, min(5.6vw, 7.4svh), 64px); }
+.bank--many .bank-tile, .bank--lots .bank-tile { border-radius: 14px; }
 
 /* Reveal */
 .reveal {
@@ -294,6 +325,7 @@ main { flex: 1; width: 100%; max-width: var(--page); margin: 0 auto; padding: 24
 .strip-title { display: flex; align-items: center; gap: 10px; font-size: 22px; margin-bottom: 12px; }
 .strip-link { width: 36px; color: var(--ink-soft); }
 .strip {
+  position: relative; /* keeps the cards' hidden labels inside the scroll box (no sideways page on phones) */
   list-style: none; margin: 0; padding: 12px 4px 16px;
   display: flex; align-items: center; gap: 2px; overflow-x: auto;
   scroll-snap-type: x proximity;
@@ -407,6 +439,21 @@ main { flex: 1; width: 100%; max-width: var(--page); margin: 0 auto; padding: 24
 }
 
 .storage-line { margin-top: 14px; color: var(--ink-soft); }
+
+/* Letters for this class: tap a tile to turn it on (filled) or off (outlined). */
+.pick { display: grid; gap: 12px; }
+.pick-group { padding: 12px 14px 14px; border-radius: 16px; border: 2px solid var(--line); background: var(--bg); }
+.pick-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.pick-head h3 { margin: 0; font-size: 18px; }
+.pick-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pick-tile { --bank: 52px; border-radius: 14px; cursor: pointer; transition: transform 0.08s ease; }
+.pick-tile:hover { transform: translateY(-2px); }
+.pick-tile:not(.is-on) { background: var(--surface); color: var(--ink-soft); box-shadow: inset 0 0 0 2px #CDBF9F; }
+.pick-tile.is-on { box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.22); }
+.check-row { display: flex; align-items: flex-start; gap: 12px; margin-top: 16px; max-width: 70ch; cursor: pointer; }
+.check-row input { width: 22px; height: 22px; margin-top: 2px; flex-shrink: 0; accent-color: var(--ink); }
+.tile-summary { margin-top: 14px; font-weight: 700; }
+.card--tiles .card-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .warn { margin-top: 12px; padding: 12px 16px; border-radius: 12px; background: var(--yellow-soft); border-left: 6px solid var(--yellow-dark); color: var(--ink); font-weight: 700; }
 
 .rec-list { display: grid; gap: 10px; }
@@ -522,6 +569,17 @@ main { flex: 1; width: 100%; max-width: var(--page); margin: 0 auto; padding: 24
   .reveal { flex-direction: column; text-align: center; }
   .reveal-actions { justify-content: center; }
   .rec-list--words { grid-template-columns: 1fr; }
+}
+
+/* Laptops, tablets and class boards held sideways: the word and the letter tiles fit on one screen. */
+@media (min-width: 721px) and (max-height: 1100px) {
+  main { padding-top: 14px; }
+  .view-head { margin-bottom: 14px; }
+  .view-head h1 { font-size: clamp(30px, 4vw, 38px); }
+  .view-lede { font-size: 18px; margin-top: 2px; }
+  :root { --tile: clamp(64px, min(19vw, 12svh), 108px); --bank: clamp(54px, min(10.5vw, 9svh), 78px); }
+  .stage { padding-top: 20px; padding-bottom: 20px; gap: 12px; }
+  .board { padding-bottom: 30px; }
 }
 
 @media (max-width: 420px) {

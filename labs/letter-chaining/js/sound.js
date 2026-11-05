@@ -130,17 +130,28 @@
   var clipLoads = {}; // name → Promise<boolean>
   var clipBuffers = {}; // name → Promise<AudioBuffer|null>
 
+  function fetchClip(name) {
+    return new Promise(function (resolve) {
+      if (clipData[name]) return resolve(true);
+      var s = document.createElement('script');
+      s.src = CLIP_ROOT + name + '.js';
+      s.async = true;
+      s.onload = function () { resolve(!!clipData[name]); };
+      s.onerror = function () { resolve(false); };
+      document.head.appendChild(s);
+    });
+  }
+
+  /* School Wi-Fi drops requests now and then. A failed download is tried once more straight away,
+     and if that fails too, again the next time the clip is needed (not cached as missing). */
   function loadClip(name) {
     if (!clipLoads[name]) {
-      clipLoads[name] = new Promise(function (resolve) {
-        if (clipData[name]) return resolve(true);
-        var s = document.createElement('script');
-        s.src = CLIP_ROOT + name + '.js';
-        s.async = true;
-        s.onload = function () { resolve(!!clipData[name]); };
-        s.onerror = function () { resolve(false); };
-        document.head.appendChild(s);
-      });
+      clipLoads[name] = fetchClip(name)
+        .then(function (ok) { return ok || fetchClip(name); })
+        .then(function (ok) {
+          if (!ok) delete clipLoads[name];
+          return ok;
+        });
     }
     return clipLoads[name];
   }
@@ -148,7 +159,8 @@
   function clipBuffer(name) {
     if (!clipBuffers[name]) {
       clipBuffers[name] = loadClip(name).then(function (ok) {
-        var c = ok && audio();
+        if (!ok) { delete clipBuffers[name]; return null; }
+        var c = audio();
         if (!c) return null;
         var bin = atob(clipData[name].b64);
         var bytes = new Uint8Array(bin.length);
@@ -169,7 +181,9 @@
   }
 
   function hasWordClip(w) { return !!(PL.isWord && PL.isWord(w)); }
-  function hasSoundClip(id) { return !!(PL.LETTER_IDS && PL.LETTER_IDS.indexOf(id) !== -1); }
+  /* A tile's bundled sound clip name (tiles that say the same sound share one: c, k and ck). */
+  function soundName(id) { var t = PL.tile && PL.tile(id); return t ? t.sound : null; }
+  function hasSoundClip(id) { return !!soundName(id); }
   function hasSentenceClip(w) { return !!(PL.WORDS && PL.WORDS[w] && PL.WORDS[w].sentence); }
 
   /* Plays a decoded clip through the shared output with short fades in and out. */
@@ -338,7 +352,7 @@
       if (my === undefined) my = Sound.begin();
       return teacherClip('sound:' + id, my).then(function (ok) {
         if (ok) return true;
-        return hasSoundClip(id) ? playBundled('sounds/' + id, my) : false;
+        return hasSoundClip(id) ? playBundled('sounds/' + soundName(id), my) : false;
       });
     },
 
@@ -351,7 +365,7 @@
       if (my === undefined) my = Sound.begin();
       return teacherClip('sound:' + id, my).then(function (teacher) {
         if (!teacher && opts && opts.silentFallback) return 'none';
-        var l = PL.letter(id);
+        var l = PL.tile(id);
         var keyword = l ? l.keyword : id;
         function sayKeyword(after) {
           if (my !== token) return Promise.resolve('stopped'); // cut off by a newer sound, not a failure
@@ -362,7 +376,7 @@
           });
         }
         var sound = teacher ? Promise.resolve(true)
-          : hasSoundClip(id) ? playBundled('sounds/' + id, my) : Promise.resolve(false);
+          : hasSoundClip(id) ? playBundled('sounds/' + soundName(id), my) : Promise.resolve(false);
         return sound.then(function (played) {
           if (!played) return my !== token ? 'stopped' : sayKeyword();
           return wait(450).then(function () { return sayKeyword(teacher ? 'teacher' : 'clip'); });
@@ -388,13 +402,15 @@
       (words || []).forEach(function (w) {
         if (hasWordClip(w)) loadClip('words/' + w);
         if (hasSentenceClip(w)) loadClip('sentences/' + w);
-        String(w).split('').forEach(function (ch) { if (hasSoundClip(ch)) loadClip('sounds/' + ch); });
+        PL.split(w).forEach(function (t) { if (hasSoundClip(t)) loadClip('sounds/' + soundName(t)); });
       });
     },
-    preloadKeywords: function () {
-      (PL.LETTERS || []).forEach(function (l) {
-        loadClip('sounds/' + l.id);
-        loadClip('keywords/' + l.keyword);
+    preloadKeywords: function (ids) {
+      (ids || []).forEach(function (id) {
+        var t = PL.tile(id);
+        if (!t) return;
+        loadClip('sounds/' + t.sound);
+        loadClip('keywords/' + t.keyword);
       });
     },
 

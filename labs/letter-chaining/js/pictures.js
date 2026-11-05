@@ -48,7 +48,19 @@
     van: '🚐',
     wax: '🕯️', web: '🕸️', wed: '💒', wet: '💦', win: '🏆', won: '🏆', wow: '😮',
     yam: '🍠', yes: '✅', yum: '😋',
-    zap: '⚡', zip: '🤐', zoo: '🦒'
+    zap: '⚡', zip: '🤐', zoo: '🦒',
+    // four letters and up (tiles like sh, ai, a_e)
+    ship: '🚢', fish: '🐟', shop: '🏪', dish: '🍽️', chick: '🐤', bath: '🛁', sock: '🧦', lock: '🔒',
+    ring: '💍', king: '👑', sing: '🎤', song: '🎵', bank: '🏦', think: '🤔', queen: '👸', check: '✅',
+    lick: '👅', sick: '🤒', whale: '🐳', wheat: '🌾', rain: '🌧️', mail: '📬', sail: '⛵', chain: '⛓️',
+    sheep: '🐑', feet: '🦶', beef: '🥩', jeep: '🚙', seed: '🌱', teeth: '🦷', beach: '🏖️', leaf: '🍃',
+    meat: '🍖', boat: '🚤', coat: '🧥', goat: '🐐', road: '🛣️', toad: '🐸', soap: '🧼', loaf: '🍞',
+    light: '💡', night: '🌙', kite: '🪁', bike: '🚲', nine: '9️⃣', five: '5️⃣', pine: '🌲', cake: '🎂',
+    game: '🎮', wave: '🌊', bone: '🦴', cone: '🍦', home: '🏠', note: '🎵', cube: '🧊', moon: '🌙',
+    boot: '👢', tool: '🔧', pool: '🏊', food: '🍲', town: '🏘️', down: '⬇️', mouth: '👄', couch: '🛋️',
+    farm: '🚜', yarn: '🧶', shark: '🦈', park: '🏞️', corn: '🌽', fork: '🍴', horn: '📯', torch: '🔦',
+    bird: '🐦', girl: '👧', shirt: '👕', surf: '🏄', tooth: '🦷', thumb: '👍', skunk: '🦨', cloud: '☁️',
+    umbrella: '☂️', zebra: '🦓', tiger: '🐯', turtle: '🐢'
   };
 
   /* Hand-drawn pictures that stand for a word (names in js/art.js). */
@@ -205,6 +217,7 @@
 
   /* Real words show a picture or a word card. Anything else is a made-up word and gets a creature. */
   PL.isRealWord = function (w) {
+    if (PL.WORDBANK && PL.WORDBANK[w]) return PL.WORDBANK[w].real;
     return !!(EMOJI[w] || handArt(w) || REAL.indexOf(w) !== -1 || (PL.WORDS && PL.WORDS[w]));
   };
 
@@ -219,4 +232,7 @@
   };
 
   PL.picture = function (w) { return PL.pictureInfo(w).svg; };
+
+  /* The picture for a tile's keyword on Meet the Sounds: its drawing, else its emoji. */
+  PL.keywordPicture = function (k) { return (PL.ART && PL.ART[k]) || PL.picture(k); };
 })();

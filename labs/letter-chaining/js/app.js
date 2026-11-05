@@ -53,10 +53,31 @@
     document.querySelectorAll('[data-icon]').forEach(function (el) { el.innerHTML = ICONS[el.getAttribute('data-icon')] || ''; });
   }
 
-  function kindOf(ch) { return PL.isVowel(ch) ? 'vowel' : 'consonant'; }
+  function kindOf(id) { return PL.isVowel(id) ? 'vowel' : 'consonant'; }
 
-  function tileEl(ch, extra) {
-    return h('span', { class: 'tile tile--' + kindOf(ch) + (extra ? ' ' + extra : ''), 'aria-hidden': 'true' }, ch);
+  /* Class for tiles with more than one letter, so they fit: tile--n2, tile--n3. */
+  function sizeCls(id) { var n = String(id).replace('_', '').length; return n > 1 ? ' tile--n' + Math.min(n, 3) : ''; }
+
+  function tileEl(id, extra) {
+    return h('span', { class: 'tile tile--' + kindOf(id) + sizeCls(id) + (extra ? ' ' + extra : ''), 'aria-hidden': 'true' }, PL.tileText(id));
+  }
+
+  /* A word's letters as small tiles. A silent-e tile shows its vowel in place and its e at the end,
+     both marked, so kids see "cake" and see that a and e work together. `mark` is a tile index. */
+  function miniWord(tiles, mark) {
+    var el = h('span', { class: 'mini-word' });
+    var tail = null;
+    tiles.forEach(function (t, j) {
+      var cls = 'mini-letter mini-letter--' + kindOf(t) + (j === mark ? ' is-changed' : '');
+      if (/^[aeiou]_e$/.test(t)) {
+        el.appendChild(h('span', { class: cls + ' is-split' }, t[0]));
+        tail = h('span', { class: cls + ' is-split' }, 'e');
+      } else {
+        el.appendChild(h('span', { class: cls }, t));
+      }
+    });
+    if (tail) el.appendChild(tail);
+    return el;
   }
 
   /* A tiny sideways traffic light: three lamps, with only the lamp for this position lit.
@@ -143,22 +164,68 @@
     var list = storeGet(CUSTOM_KEY, []);
     if (!Array.isArray(list)) return [];
     // Re-validate anything read back from storage
-    return list.filter(function (c) {
-      return c && typeof c.id === 'string' && PL.validateChain((c.words || []).join(' ')).ok;
-    }).map(function (c) {
-      return { id: c.id, name: String(c.name || 'My chain').slice(0, 30), words: c.words, custom: true };
+    var out = [];
+    list.forEach(function (c) {
+      if (!c || typeof c.id !== 'string') return;
+      var v = PL.validateChain((c.words || []).join(' '));
+      if (v.ok) out.push({ id: c.id, name: String(c.name || 'My chain').slice(0, 30), words: v.words, split: v.split, custom: true });
     });
+    return out;
   }
-  function allChains() { return PL.CHAINS.concat(customChains()); }
+  /* ------------------------------------------------------------------ the class's tiles */
+
+  /* What a teacher picked: { tiles, madeUp, seed }. seed 0 means "never asked for new chains". With the
+     start set and seed 0, kids get the built-in chains, the same as before tiles could be picked. */
+  var SET_KEY = 'pl-tile-set';
+  function tileSet() {
+    var v = storeGet(SET_KEY, null) || {};
+    var tiles = Array.isArray(v.tiles) ? PL.TILE_IDS.filter(function (id) { return v.tiles.indexOf(id) !== -1; }) : [];
+    if (!tiles.length) tiles = PL.START_SET.slice();
+    return { tiles: tiles, madeUp: !!v.madeUp, seed: Math.max(0, Math.floor(Number(v.seed) || 0)) };
+  }
+  function saveTileSet(set) {
+    storeSet(SET_KEY, { tiles: set.tiles, madeUp: !!set.madeUp, seed: set.seed || 0 });
+    builtCache = null;
+  }
+  function isStartSet(set) {
+    var a = set.tiles.slice().sort().join(' '), b = PL.START_SET.slice().sort().join(' ');
+    return a === b && !set.madeUp && !set.seed;
+  }
+
+  var builtCache = null;
+  function builtChains() {
+    var set = tileSet();
+    if (isStartSet(set)) return PL.CHAINS;
+    var key = set.tiles.join(' ') + '|' + set.madeUp + '|' + set.seed;
+    if (!builtCache || builtCache.key !== key) {
+      var list = PL.buildChains(set.tiles, { madeUp: set.madeUp, seed: set.seed || 1 });
+      // Too few words for a chain: kids keep the built-in chains until the teacher turns on more tiles.
+      builtCache = { key: key, list: list.length ? list : PL.CHAINS, empty: !list.length };
+    }
+    return builtCache.list;
+  }
+  function builtEmpty() { builtChains(); return !!(builtCache && builtCache.empty); }
+
+  function allChains() { return builtChains().concat(customChains()); }
+
+  /* A word's tiles in the chain it belongs to. Teacher chains saved before tiles could hold more than
+     one letter keep reading letter by letter. */
+  function tilesOf(w, chain) {
+    return chain && chain.split === 'letters' ? PL.splitLetters(w) : PL.split(w);
+  }
   function findChain(id) {
     var list = allChains();
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
   }
 
+  /* Words to record: the chains' words, and words with a sentence that use only the class's tiles. */
   function allWords() {
     var set = {};
-    Object.keys(PL.WORDS).forEach(function (w) { set[w] = true; });
+    var tiles = tileSet().tiles;
+    Object.keys(PL.WORDS).forEach(function (w) {
+      if (PL.split(w).every(function (t) { return tiles.indexOf(t) !== -1; })) set[w] = true;
+    });
     allChains().forEach(function (c) { c.words.forEach(function (w) { set[w] = true; }); });
     return Object.keys(set).sort();
   }
@@ -207,10 +274,11 @@
       var before = i > 0 ? demo[i - 1] : null;
       var changed = before ? PL.changedIndex(before, w) : -1;
       var word = h('span', { class: 'hero-word' });
-      w.split('').forEach(function (ch, j) {
+      var was = before ? PL.split(before) : [];
+      PL.split(w).forEach(function (ch, j) {
         if (j !== changed) { word.appendChild(tileEl(ch, 'hero-tile')); return; }
         var t = h('span', { class: 'tile tile--' + kindOf(ch) + ' hero-tile is-changed', 'aria-hidden': 'true' },
-          h('span', { class: 'swap-old' }, before[j]),
+          h('span', { class: 'swap-old' }, was[j]),
           h('span', { class: 'swap-new' }, ch));
         t.style.setProperty('--d', (0.5 + (i - 1) * 0.8) + 's');
         word.appendChild(t);
@@ -226,24 +294,40 @@
 
   /* ------------------------------------------------------------------ sounds */
 
+  /* The name on a tile's card: "short a", "long a", "the b sound", "the sh sound". */
+  function tileName(l) {
+    return l.kind === 'vowel' ? (l.group === 'short' || l.group === 'team' || l.group === 'silent' ? l.label : 'the ' + l.label + ' sound')
+      : 'the ' + l.label + ' sound';
+  }
+
   var Sounds = {
     render: function () {
-      var vg = $('vowelGrid'), cg = $('consonantGrid');
-      vg.innerHTML = ''; cg.innerHTML = '';
-      Sound.preloadKeywords();
+      var wrap = $('soundGroups');
+      wrap.innerHTML = '';
+      var ids = tileSet().tiles;
+      Sound.preloadKeywords(ids);
       var missing = 0;
-      PL.LETTERS.forEach(function (l) {
+      PL.GROUPS.forEach(function (g) {
+        var list = PL.TILES.filter(function (l) { return l.group === g.id && ids.indexOf(l.id) !== -1; });
+        if (!list.length) return;
+        var kind = list[0].kind;
+        var grid = h('div', { class: 'sound-grid' });
+        wrap.appendChild(h('h2', { class: 'group-title' }, h('span', { class: 'swatch swatch--' + kind }), g.name));
+        wrap.appendChild(grid);
+        list.forEach(function (l) { grid.appendChild(card(l)); });
+      });
+      function card(l) {
         var hasVoice = Voice.has('sound:' + l.id);
         if (!hasVoice) missing++;
         var card = h('button', {
           type: 'button',
           class: 'sound-card sound-card--' + l.kind,
-          'aria-label': l.label + ', as in ' + l.keyword + '. Play the sound.'
+          'aria-label': tileName(l) + ', ' + l.id.replace('_', ' ') + ' as in ' + l.keyword + '. Play the sound.'
         },
-          h('span', { class: 'sound-card-art', html: PL.art(l.art) }),
+          h('span', { class: 'sound-card-art', html: PL.keywordPicture(l.keyword) }),
           tileEl(l.id, 'tile--lg'),
-          h('span', { class: 'sound-card-label' }, l.kind === 'vowel' ? l.label : 'the ' + l.id + ' sound'),
-          h('span', { class: 'sound-card-key' }, l.id, h('span', { class: 'key-rest' }, ' as in '), h('strong', null, l.keyword)),
+          h('span', { class: 'sound-card-label' }, tileName(l)),
+          h('span', { class: 'sound-card-key' }, PL.tileText(l.id), h('span', { class: 'key-rest' }, ' as in '), h('strong', null, l.keyword)),
           hasVoice ? h('span', { class: 'badge' }, h('span', { class: 'badge-icon', html: PL.art('mic') }), 'Teacher voice') : null
         );
         card.addEventListener('click', function () {
@@ -254,11 +338,11 @@
             if (src === 'none') toast('This sound could not play. Reload the page, or record it in Teacher Corner.');
           });
         });
-        (l.kind === 'vowel' ? vg : cg).appendChild(card);
-      });
+        return card;
+      }
       var note = $('soundsNote');
       note.hidden = missing === 0;
-      note.textContent = missing === PL.LETTERS.length
+      note.textContent = missing === ids.length
         ? 'The sounds use the page\'s computer-generated voice. Teachers can record their own in Teacher Corner.'
         : 'Cards without "Teacher voice" use the page\'s computer-generated voice. Teachers can record them in Teacher Corner.';
     }
@@ -284,6 +368,9 @@
 
     function target() { return s.chain.words[s.step]; }
     function prev() { return s.step > 0 ? s.chain.words[s.step - 1] : null; }
+    function tgt() { return tilesOf(target(), s.chain); }
+    function was() { return s.step > 0 ? tilesOf(prev(), s.chain) : null; }
+    function isSplit(id) { return /^[aeiou]_e$/.test(id || ''); }
     function mode() { return s.step === 0 ? 'build' : 'change'; }
 
     function setFeedback(msg, tone) {
@@ -341,57 +428,82 @@
       var b = $('board');
       b.classList.remove('is-win', 'is-sweep', 'is-nudge');
       b.innerHTML = '';
-      // Once solved, keep the tile that changed marked, with the old letter crossed out beside it.
-      var was = s.solved && s.step > 0 ? prev() : null;
-      var changedAt = was ? PL.changedIndex(was, target()) : -1;
+      // Once solved, keep the tile that changed marked, with the old tile crossed out beside it.
+      var old = s.solved && s.step > 0 ? was() : null;
+      var changedAt = old ? PL.changedIndex(old, tgt()) : -1;
       var len = s.tiles.length;
+      var tail = false;
       s.tiles.forEach(function (ch, i) {
         var pos = PL.POSITIONS[PL.positionAt(i, len)];
         var isChanged = i === changedAt;
-        var label = pos.key + ' sound' + (ch ? ', ' + ch : ', empty') + (s.selected === i ? ', selected' : '') +
-          (isChanged ? ', changed from ' + was[i] : '');
+        if (isSplit(ch)) tail = true;
+        var label = pos.key + ' sound' + (ch ? ', ' + spoken(ch) : ', empty') + (s.selected === i ? ', selected' : '') +
+          (isChanged ? ', changed from ' + spoken(old[i]) : '');
         var slot = h('button', {
           type: 'button',
-          class: 'slot' + (ch ? ' slot--filled tile--' + kindOf(ch) : '') + (s.selected === i ? ' is-selected' : '') + (isChanged ? ' is-changed' : ''),
+          class: 'slot' + (ch ? ' slot--filled tile--' + kindOf(ch) + sizeCls(isSplit(ch) ? 'a' : ch) : '') + (isSplit(ch) ? ' is-split' : '') +
+            (s.selected === i ? ' is-selected' : '') + (isChanged ? ' is-changed' : ''),
           'data-i': i,
           'aria-label': label,
           'aria-pressed': s.selected === i ? 'true' : 'false',
           disabled: s.solved ? true : null
         },
-          ch ? h('span', { class: 'slot-letter' }, ch) : h('span', { class: 'slot-empty', 'aria-hidden': 'true' }, '?'));
+          ch ? h('span', { class: 'slot-letter' }, isSplit(ch) ? ch[0] : ch) : h('span', { class: 'slot-empty', 'aria-hidden': 'true' }, '?'));
         slot.addEventListener('click', function () { onSlot(i); });
         var col = h('div', { class: 'slot-col' },
           slot,
           h('span', { class: 'slot-label' }, lightEl(PL.positionAt(i, len)), pos.key),
           isChanged ? h('span', { class: 'slot-swap', 'aria-hidden': 'true' },
-            h('span', { class: 'mini-letter mini-letter--' + kindOf(was[i]) + ' is-was' }, was[i]),
+            h('span', { class: 'mini-letter mini-letter--' + kindOf(old[i]) + ' is-was' }, PL.tileText(old[i])),
             h('span', { class: 'slot-swap-arrow', html: ICONS.next }),
-            h('span', { class: 'mini-letter mini-letter--' + kindOf(ch) + ' is-changed' }, ch)) : null);
+            h('span', { class: 'mini-letter mini-letter--' + kindOf(ch) + ' is-changed' }, PL.tileText(ch))) : null);
         b.appendChild(col);
       });
+      // A silent-e tile shows its vowel in the middle and its quiet e after the last tile.
+      if (tail) {
+        b.appendChild(h('div', { class: 'slot-col slot-col--tail', 'aria-hidden': 'true' },
+          h('span', { class: 'slot-tail is-split' }, 'e'),
+          h('span', { class: 'slot-label slot-label--tail' }, 'quiet e')));
+      }
       b.appendChild(h('span', { class: 'sweep', 'aria-hidden': 'true', html: ICONS.next }));
     }
 
-    /* The lesson's letters, plus any other letters this chain uses. */
-    function bankLetters() {
-      var out = PL.LETTER_IDS.slice();
-      s.chain.words.join('').split('').forEach(function (ch) { if (out.indexOf(ch) === -1) out.push(ch); });
-      return out;
+    /* How a tile is read out by a screen reader: "a", "s h", "a, silent e". */
+    function spoken(id) {
+      if (!id) return '';
+      if (isSplit(id)) return id[0] + ', silent e';
+      return id.split('').join(' ');
+    }
+
+    /* The class's tiles (vowels first), plus any other tiles this chain uses. */
+    function bankTiles() {
+      var set = tileSet().tiles.slice();
+      s.chain.words.forEach(function (w) {
+        tilesOf(w, s.chain).forEach(function (t) { if (set.indexOf(t) === -1) set.push(t); });
+      });
+      // Vowels first. The start set keeps its old order (a i o, t d c g n), so the tiles kids know stay put.
+      var order = function (t) {
+        var st = PL.START_SET.indexOf(t), i = PL.TILE_IDS.indexOf(t);
+        return (PL.isVowel(t) ? 0 : 1000) + (st !== -1 ? st : 100 + (i === -1 ? 999 : i));
+      };
+      return set.sort(function (a, b) { return order(a) - order(b); });
     }
 
     function renderBank() {
       var bank = $('bank');
-      var letters = bankLetters();
-      if (bank.getAttribute('data-letters') !== letters.join('')) {
+      var letters = bankTiles();
+      if (bank.getAttribute('data-letters') !== letters.join(' ')) {
         bank.innerHTML = '';
-        bank.setAttribute('data-letters', letters.join(''));
+        bank.setAttribute('data-letters', letters.join(' '));
+        bank.classList.toggle('bank--many', letters.length > 16 && letters.length <= 30);
+        bank.classList.toggle('bank--lots', letters.length > 30);
         letters.forEach(function (ch) {
           var btn = h('button', {
             type: 'button',
-            class: 'tile tile--' + kindOf(ch) + ' bank-tile',
+            class: 'tile tile--' + kindOf(ch) + sizeCls(ch) + ' bank-tile',
             'data-letter': ch,
-            'aria-label': 'Letter ' + ch
-          }, ch);
+            'aria-label': (ch.length > 1 ? 'Tile ' : 'Letter ') + spoken(ch)
+          }, PL.tileText(ch));
           btn.addEventListener('click', function () { onLetter(ch); });
           bank.appendChild(btn);
         });
@@ -415,13 +527,11 @@
             h('span', { class: 'strip-q', 'aria-hidden': 'true' }, '?')));
           return;
         }
-        var changed = i > 0 ? PL.changedIndex(s.chain.words[i - 1], w) : -1;
-        var letters = h('span', { class: 'mini-word' });
-        w.split('').forEach(function (ch, j) {
-          letters.appendChild(h('span', { class: 'mini-letter mini-letter--' + kindOf(ch) + (j === changed ? ' is-changed' : '') }, ch));
-        });
+        var tw = tilesOf(w, s.chain);
+        var changed = i > 0 ? PL.changedIndex(tilesOf(s.chain.words[i - 1], s.chain), tw) : -1;
+        var letters = miniWord(tw, changed);
         var card = h('li', { class: 'strip-card', 'data-i': i },
-          h('button', { type: 'button', class: 'strip-btn', 'aria-label': w + (changed >= 0 ? ', changed the ' + positionName(changed, w.length) + ' sound' : '') + '. Hear it.' },
+          h('button', { type: 'button', class: 'strip-btn', 'aria-label': w + (changed >= 0 ? ', changed the ' + positionName(changed, tw.length) + ' sound' : '') + '. Hear it.' },
             pictureEl(w, 'strip-art'),
             letters));
         card.querySelector('button').addEventListener('click', function () { Sound.word(w); });
@@ -465,7 +575,7 @@
       Sound.preloadWords(chain.words);
       s.chain = chain;
       s.step = 0;
-      s.tiles = target().split('').map(function () { return ''; });
+      s.tiles = tgt().map(function () { return ''; });
       s.selected = 0;
       s.solved = false;
       s.busy = false;
@@ -484,7 +594,7 @@
       if (s.step >= s.chain.words.length - 1) return;
       clearTimeout(revertTimer);
       s.step++;
-      s.tiles = s.chain.words[s.step - 1].split('');
+      s.tiles = was().slice();
       s.selected = -1;
       s.solved = false;
       s.busy = false;   // a blend still winding down must not swallow taps
@@ -524,7 +634,7 @@
     function wouldBlock(idx, ch) {
       var t = s.tiles.slice();
       t[idx] = ch;
-      return t.every(Boolean) && PL.BLOCKED.indexOf(t.join('')) !== -1;
+      return t.every(Boolean) && PL.isBlocked(t);
     }
 
     function refuse(idx) {
@@ -578,9 +688,10 @@
     }
 
     function check(changedAt) {
-      var word = s.tiles.join('');
-      var t = target();
-      if (word === t) return success();
+      var word = PL.spell(s.tiles);
+      var t = tgt();
+      if (s.tiles.join(' ') === t.join(' ')) return success();
+      if (PL.phones(s.tiles).join(' ') === PL.phones(t).join(' ')) return otherSpelling();
 
       s.tries++;
       Sound.chime('oops');
@@ -600,12 +711,12 @@
           s.busy = false;
           renderBoard(); renderBank(); renderTools();
           if (s.tries >= 2) showHint();
-          Sound.word(t);
+          Sound.word(target());
         }, 1300);
         return;
       }
 
-      var targetAt = PL.changedIndex(prev(), t);
+      var targetAt = PL.changedIndex(was(), t);
       var msg;
       if (changedAt !== targetAt) {
         msg = 'That makes "' + word + '". You changed the ' + positionName(changedAt, t.length) +
@@ -618,13 +729,29 @@
       if (el) restartAnim(el, 'is-shake');
       s.busy = true;
       revertTimer = setTimeout(function () {
-        s.tiles = prev().split('');
+        s.tiles = was().slice();
         s.selected = changedAt === targetAt ? targetAt : -1;
         s.busy = false;
         renderBoard(); renderBank(); renderTools();
         if (s.tries >= 2) showHint();
-        Sound.word(t);
+        Sound.word(target());
       }, 1500);
+    }
+
+    /* The right sound with another spelling (ee for ea, k for c). The child heard it right, so this
+       isn't a wrong try: show which tile this word uses and let them swap it in. */
+    function otherSpelling() {
+      var t = tgt();
+      var at = s.tiles.findIndex(function (x, i) { return x !== t[i]; });
+      setFeedback('Right sound! "' + target() + '" spells it ' + PL.tileText(t[at]).replace('_', '…') + '. Tap the glowing tile.', 'info');
+      s.busy = true;
+      revertTimer = setTimeout(function () {
+        s.tiles[at] = mode() === 'build' ? '' : was()[at];
+        s.selected = at;
+        s.busy = false;
+        renderBoard(); renderBank(); renderTools();
+        glowLetter(t[at]);
+      }, 1200);
     }
 
     function success() {
@@ -641,7 +768,7 @@
       function stillHere() { return s.chain === chainAt && s.step === stepAt && s.solved; }
       setTimeout(function () {
         if (!stillHere()) return;
-        blend(target(), true).then(function () {
+        blend(tgt(), true).then(function () {
           if (!stillHere()) return;
           if (last) celebrate();
           else $('nextBtn').focus({ preventScroll: true });
@@ -661,10 +788,11 @@
     }
 
     /* Light each sound in order (kids say it), then sweep while kids say the word fast. */
-    function blend(word, knownWord) {
+    function blend(tiles, knownWord) {
       var my = Sound.begin();
       var slots = Array.prototype.slice.call(document.querySelectorAll('#board .slot'));
       var board = $('board');
+      var word = PL.spell(tiles);
       var real = knownWord || PL.isRealWord(word) ||
         customChains().some(function (c) { return c.words.indexOf(word) !== -1; });
       s.blendId = my;
@@ -677,9 +805,10 @@
         if (!Sound.alive(my)) return Promise.resolve(false);
         if (i >= slots.length) return Promise.resolve(true);
         var el = slots[i];
-        var ch = word[i];
+        var ch = tiles[i];
         slots.forEach(function (x) { x.classList.remove('is-lit'); });
         el.classList.add('is-lit');
+        litTail(isSplit(ch));
         i++;
         return Sound.letterSound(ch, my).then(function (played) {
           return Sound.wait(played ? 220 : 650, my);
@@ -687,16 +816,19 @@
       }
       return nextSound().then(function (ok) {
         slots.forEach(function (x) { x.classList.remove('is-lit'); });
+        litTail(false);
         if (!ok) return finish();
         setFeedback(real ? 'Now say it fast!' : 'Now say it fast! (Is it a real word?)', 'info');
         restartAnim(board, 'is-sweep');
         slots.forEach(function (x) { x.classList.add('is-lit'); });
+        litTail(tiles.some(isSplit));
         // Kids say the word themselves, so the page stays quiet and gives them a moment.
         return Sound.wait((reduceMotion() ? 200 : 700) + 1500, my).then(finish);
       });
 
       function finish() {
         slots.forEach(function (x) { x.classList.remove('is-lit'); });
+        litTail(false);
         if (s.blendId !== my) return; // the lesson already moved on
         s.blendId = 0;
         s.busy = false;
@@ -707,9 +839,15 @@
       }
     }
 
+    /* The quiet e lights with its vowel. */
+    function litTail(on) {
+      var e = document.querySelector('#board .slot-tail');
+      if (e) e.classList.toggle('is-lit', !!on);
+    }
+
     function showHint() {
       if (s.solved) return;
-      var t = target();
+      var t = tgt();
       if (mode() === 'build') {
         var at = s.tiles.findIndex(function (ch, i) { return ch !== t[i]; });
         if (at === -1) return;
@@ -717,10 +855,10 @@
         renderBoard(); renderBank();
         glowLetter(t[at]);
         setFeedback('Hint: listen for the ' + positionName(at, t.length) + ' sound. The glowing letter makes it.', 'info');
-        Sound.word(t);
+        Sound.word(target());
         return;
       }
-      var pos = PL.changedIndex(prev(), t);
+      var pos = PL.changedIndex(was(), t);
       s.hintLevel++;
       s.selected = pos;
       renderBoard(); renderBank();
@@ -732,7 +870,7 @@
       } else {
         setFeedback('Hint: listen to the ' + positionName(pos, t.length) + ' sound. That is the one that changes.', 'info');
       }
-      Sound.word(t);
+      Sound.word(target());
     }
 
     function glowLetter(ch) {
@@ -763,7 +901,7 @@
       if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       var k = e.key.toLowerCase();
-      if (k.length === 1 && bankLetters().indexOf(k) !== -1) {
+      if (k.length === 1 && bankTiles().indexOf(k) !== -1) {
         e.preventDefault();
         onLetter(k);
       } else if ((k === 'arrowleft' || k === 'arrowright') && !s.solved && document.activeElement && document.activeElement.classList.contains('slot')) {
@@ -777,7 +915,7 @@
     function wire() {
       $('listenBtn').addEventListener('click', function () { Sound.word(target()); });
       $('blendBtn').addEventListener('click', function () {
-        if (s.tiles.every(Boolean)) blend(s.tiles.join(''), false);
+        if (s.tiles.every(Boolean)) blend(s.tiles.slice(), false);
       });
       $('hintBtn').addEventListener('click', showHint);
       $('nextBtn').addEventListener('click', nextStep);
@@ -800,12 +938,14 @@
       onShow: function () {
         if (!s.chain || !findChain(s.chain.id)) {
           var last = findChain(storeGet(LAST_CHAIN_KEY, ''));
-          start(last || PL.CHAINS[0], false);
+          start(last || allChains()[0] || PL.CHAINS[0], false);
         } else {
           render();
         }
       },
-      refresh: function () { if (s.chain) renderPicker(); }
+      refresh: function () { if (s.chain) renderPicker(); },
+      /* The class's tiles changed: the next visit starts fresh. */
+      reset: function () { clearTimeout(revertTimer); s.chain = null; }
     };
   })();
 
@@ -815,17 +955,46 @@
     var ROUNDS = 9;
     var s = { questions: [], round: 0, score: 0, tries: 0, answered: false };
 
+    /* Real 3-tile words with a picture, using only the class's tiles. Each round asks about one tile
+       whose sound is in the word only once. Tiles past the basics come first, and each position gets
+       a third of the rounds when there are enough words. */
     function makeQuestions() {
+      var set = tileSet().tiles;
+      var focus = set.filter(function (t) { var x = PL.tile(t); return x.group !== 'short' && x.group !== 'consonant'; });
       var byPos = [[], [], []];
-      Object.keys(PL.WORDS).forEach(function (w) {
-        if (!PL.WORDS[w].art) return;
-        for (var i = 0; i < 3; i++) {
-          var ch = w[i];
-          if (w.split(ch).length - 1 === 1) byPos[i].push({ word: w, at: i, letter: ch });
-        }
+      PL.wordsFor(set, false).real.forEach(function (w) {
+        var tiles = PL.split(w);
+        if (tiles.length !== 3) return;
+        var kind = PL.pictureInfo(w).kind;
+        if (kind !== 'art' && kind !== 'emoji') return;
+        tiles.forEach(function (t, i) {
+          if (PL.soundOnce(tiles, i)) byPos[i].push({ word: w, tiles: tiles, at: i, letter: t, focus: focus.indexOf(t) !== -1 });
+        });
       });
-      var picks = [];
-      byPos.forEach(function (list) { picks = picks.concat(shuffle(list).slice(0, ROUNDS / 3)); });
+      var picks = [], left = [], used = {};
+      byPos.forEach(function (list) {
+        var f = shuffle(list.filter(function (x) { return x.focus; }));
+        var rest = shuffle(list.filter(function (x) { return !x.focus; }));
+        // Each word once when there are enough words
+        var mine = f.concat(rest).filter(function (x) { return !used[x.word]; }).slice(0, ROUNDS / 3);
+        mine.forEach(function (x) { used[x.word] = true; });
+        picks = picks.concat(mine);
+        left = left.concat(f.concat(rest).filter(function (x) { return mine.indexOf(x) === -1; }));
+      });
+      // Too few for a third at each position: use more of the class's words, then ask some again.
+      picks = picks.concat(shuffle(left).slice(0, ROUNDS - picks.length));
+      // No pictured words with these tiles at all: use the built-in words.
+      if (!picks.length) {
+        Object.keys(PL.WORDS).forEach(function (w) {
+          var tiles = PL.split(w);
+          if (!PL.WORDS[w].art || tiles.length !== 3) return;
+          var i = Math.floor(Math.random() * 3);
+          if (PL.soundOnce(tiles, i)) picks.push({ word: w, tiles: tiles, at: i, letter: tiles[i] });
+        });
+        picks = shuffle(picks).slice(0, ROUNDS);
+      }
+      var some = picks.slice();
+      while (some.length && picks.length < ROUNDS) picks.push(some[picks.length % some.length]);
       // Avoid the same word twice in a row
       var q = shuffle(picks);
       for (var k = 1; k < q.length; k++) {
@@ -850,22 +1019,21 @@
 
     function renderQuestion() {
       var cur = q();
-      var info = PL.WORDS[cur.word];
-      $('spyPicture').innerHTML = PL.art(info.art);
+      $('spyPicture').innerHTML = PL.picture(cur.word);
       $('spyPicture').setAttribute('aria-label', 'Picture. Hear the word.');
       var p = $('spyPrompt');
       p.innerHTML = '';
       p.appendChild(document.createTextNode('Where do you hear '));
       p.appendChild(tileEl(cur.letter, 'tile--md tile--inline'));
       p.appendChild(document.createTextNode('?'));
-      p.appendChild(h('span', { class: 'sr-only' }, ' The letter ' + cur.letter + '.'));
+      p.appendChild(h('span', { class: 'sr-only' }, (cur.letter.length > 1 ? ' The tile ' : ' The letter ') + cur.letter.replace('_', ' ') + '.'));
       $('spySound').hidden = !Sound.hasLetterSound(cur.letter);
 
       var boxes = $('spyBoxes');
       boxes.innerHTML = '';
       PL.POSITIONS.forEach(function (pos, i) {
         var b = h('button', { type: 'button', class: 'box', 'data-i': i, 'aria-label': pos.key },
-          h('span', { class: 'box-face' }, s.answered ? tileEl(cur.word[i], i === cur.at ? 'is-target' : 'is-dim') : null),
+          h('span', { class: 'box-face' }, s.answered ? tileEl(cur.tiles[i], i === cur.at ? 'is-target' : 'is-dim') : null),
           h('span', { class: 'slot-label' }, lightEl(i), pos.key));
         b.disabled = s.answered;
         b.addEventListener('click', function () { answer(i, b); });
@@ -887,7 +1055,7 @@
         renderQuestion();
         var box = document.querySelector('#spyBoxes .box[data-i="' + i + '"]');
         if (box) { box.classList.add('is-right'); restartAnim(box, 'is-pop'); }
-        $('spyFeedback').textContent = 'Yes! ' + cur.letter + ' is at the ' + PL.POSITIONS[i].key + ' of ' + cur.word + '.';
+        $('spyFeedback').textContent = 'Yes! ' + PL.tileText(cur.letter) + ' is at the ' + PL.POSITIONS[i].key + ' of ' + cur.word + '.';
         $('spyFeedback').className = 'feedback feedback--yay';
         setTimeout(function () { Sound.word(cur.word); }, 400);
         $('spyNext').hidden = false;
@@ -946,7 +1114,8 @@
 
     return {
       wire: wire,
-      onShow: function () { if (!s.questions.length) reset(false); else renderQuestion(); }
+      onShow: function () { if (!s.questions.length) reset(false); else renderQuestion(); },
+      reset: function () { s.questions = []; }
     };
   })();
 
@@ -1143,35 +1312,142 @@
       else active.session.stop();
     }
 
+    /* "/k/ as in cup", "long a (ai) as in rain", "/sh/ as in ship" */
+    var SLASH = { c: 'k', k: 'k', ck: 'k', x: 'ks', qu: 'kw', wh: 'w', y: 'y', j: 'j' };
+    function recTitle(l) {
+      if (l.group === 'short') return l.label + ' as in ' + l.keyword;
+      if (l.kind === 'vowel') return (l.label === l.id ? '/' + l.id + '/' : l.label + ' (' + PL.tileText(l.id) + ')') + ' as in ' + l.keyword;
+      return '/' + (SLASH[l.id] || l.id) + '/ as in ' + l.keyword;
+    }
+
     function renderSoundRows() {
       var list = $('soundRecList');
       list.innerHTML = '';
-      PL.LETTERS.forEach(function (l) {
+      var ids = tileSet().tiles.slice();
+      // Other tiles from teacher-made chains
+      var extra = [];
+      customChains().forEach(function (c) {
+        c.words.forEach(function (w) {
+          tilesOf(w, c).forEach(function (t) { if (ids.indexOf(t) === -1 && extra.indexOf(t) === -1) extra.push(t); });
+        });
+      });
+      ids.concat(extra.filter(function (t) { return PL.tile(t); })).forEach(function (id) {
+        var l = PL.tile(id);
         list.appendChild(recRow('sound:' + l.id, {
-          visual: h('span', { class: 'rec-visual' }, tileEl(l.id), h('span', { class: 'rec-art', html: PL.art(l.art) })),
-          title: (l.kind === 'vowel' ? l.label : '/' + (l.id === 'c' ? 'k' : l.id) + '/') + ' as in ' + l.keyword,
-          spoken: l.label + ' sound',
-          tip: l.tip,
+          visual: h('span', { class: 'rec-visual' }, tileEl(l.id), h('span', { class: 'rec-art', html: PL.keywordPicture(l.keyword) })),
+          title: recTitle(l),
+          spoken: (l.kind === 'vowel' ? l.label : l.id.replace('_', ' ')) + ' sound',
+          tip: extra.indexOf(id) !== -1 ? 'From your chains. ' + l.tip : l.tip,
           fallback: 'Not recorded yet. Kids hear the page\'s voice.',
           maxMs: 4000
         }));
       });
-      // Other letters from teacher-made chains
-      var extra = [];
-      customChains().forEach(function (c) {
-        c.words.join('').split('').forEach(function (ch) {
-          if (PL.LETTER_IDS.indexOf(ch) === -1 && extra.indexOf(ch) === -1) extra.push(ch);
-        });
-      });
-      extra.sort().forEach(function (ch) {
+      extra.filter(function (t) { return !PL.tile(t); }).sort().forEach(function (ch) {
         list.appendChild(recRow('sound:' + ch, {
           visual: h('span', { class: 'rec-visual' }, tileEl(ch)),
-          title: PL.isVowel(ch) ? 'short ' + ch : '/' + ch + '/',
+          title: '/' + ch + '/',
           spoken: ch + ' sound',
           tip: 'From your chains.',
           fallback: 'Not recorded yet. Kids hear a short pause for this sound.',
           maxMs: 4000
         }));
+      });
+    }
+
+    /* ---------- letters for this class ---------- */
+
+    function renderTiles() {
+      var set = tileSet();
+      var wrap = $('tilePicker');
+      wrap.innerHTML = '';
+      PL.GROUPS.forEach(function (g) {
+        var list = PL.TILES.filter(function (t) { return t.group === g.id; });
+        var on = list.filter(function (t) { return set.tiles.indexOf(t.id) !== -1; }).length;
+        var all = h('button', { type: 'button', class: 'btn btn--ghost btn--sm pick-all' }, on === list.length ? 'Turn all off' : 'Turn all on');
+        all.addEventListener('click', function () {
+          var cur = tileSet();
+          var ids = list.map(function (t) { return t.id; });
+          cur.tiles = on === list.length ? cur.tiles.filter(function (id) { return ids.indexOf(id) === -1; }) : cur.tiles.concat(ids);
+          changeTiles(cur, g.id);
+        });
+        var row = h('div', { class: 'pick-row', role: 'group', 'aria-label': g.name });
+        list.forEach(function (t) {
+          var pressed = set.tiles.indexOf(t.id) !== -1;
+          var b = h('button', {
+            type: 'button',
+            class: 'pick-tile tile tile--' + t.kind + sizeCls(t.id) + (pressed ? ' is-on' : ''),
+            'aria-pressed': pressed ? 'true' : 'false',
+            'aria-label': PL.tileText(t.id).replace('_', ' ') + ', ' + recTitle(t) + (t.where ? ', ' + t.where + ' of words only' : ''),
+            title: recTitle(t) + (t.where ? ' (' + (t.where === 'end' ? 'end' : 'beginning') + ' of words only)' : ''),
+            'data-tile': t.id
+          }, PL.tileText(t.id));
+          b.addEventListener('click', function () {
+            var cur = tileSet();
+            var i = cur.tiles.indexOf(t.id);
+            if (i === -1) cur.tiles.push(t.id); else cur.tiles.splice(i, 1);
+            changeTiles(cur, null, t.id);
+          });
+          row.appendChild(b);
+        });
+        wrap.appendChild(h('section', { class: 'pick-group', 'data-group': g.id },
+          h('div', { class: 'pick-head' }, h('h3', null, g.name), all), row));
+      });
+      $('madeUpToggle').checked = set.madeUp;
+      renderTileSummary();
+    }
+
+    function renderTileSummary() {
+      var set = tileSet();
+      var words = PL.wordsFor(set.tiles, set.madeUp);
+      var chains = builtEmpty() ? [] : builtChains();
+      var start = isStartSet(set);
+      var vowels = set.tiles.filter(PL.isVowel).length;
+      var parts = [set.tiles.length + (set.tiles.length === 1 ? ' tile' : ' tiles') + ' on',
+        words.real.length + ' real words'];
+      if (set.madeUp) parts.push(words.madeUp.length + ' made-up words');
+      parts.push(chains.length + (chains.length === 1 ? ' chain' : ' chains') + (start ? ' (the built-in chains)' : ''));
+      var msg = parts.join(' · ');
+      var warn = '';
+      if (!vowels) warn = 'Turn on at least one vowel.';
+      else if (vowels === set.tiles.length) warn = 'Turn on some consonants too.';
+      else if (!start && !chains.length) warn = 'There aren\'t enough words for a chain yet. Turn on more tiles. Until then, kids get the built-in chains.';
+      $('tileSummary').textContent = msg;
+      $('tileWarn').textContent = warn;
+      $('tileWarn').hidden = !warn;
+    }
+
+    /* Saves the tiles and refreshes everything that uses them. Keeps focus on the button pressed. */
+    function changeTiles(set, groupId, tileId) {
+      if (!set.tiles.length) { toast('Keep at least one tile on.'); return; }
+      saveTileSet(set);
+      Chains.reset();
+      Spy.reset();
+      renderTiles();
+      renderSoundRows();
+      renderWordRows();
+      var focus = tileId ? document.querySelector('#tilePicker [data-tile="' + tileId + '"]')
+        : groupId ? document.querySelector('#tilePicker [data-group="' + groupId + '"] .pick-all') : null;
+      if (focus) focus.focus();
+    }
+
+    function wireTiles() {
+      $('madeUpToggle').addEventListener('change', function () {
+        var cur = tileSet();
+        cur.madeUp = $('madeUpToggle').checked;
+        changeTiles(cur);
+      });
+      $('newChainsBtn').addEventListener('click', function () {
+        var cur = tileSet();
+        cur.seed = (cur.seed || 0) + 1;
+        changeTiles(cur);
+        var n = builtChains().length;
+        toast(!builtEmpty() ? 'Made ' + n + (n === 1 ? ' new chain.' : ' new chains.') : 'There aren\'t enough words for a chain yet. Turn on more tiles.');
+      });
+      $('resetTilesBtn').addEventListener('click', function () {
+        try { localStorage.removeItem(SET_KEY); } catch (e) { /* ignore */ }
+        builtCache = null;
+        changeTiles(tileSet());
+        toast('Back to the start set: short a, i, o and t, d, c, g, n.');
       });
     }
 
@@ -1185,7 +1461,7 @@
           title: w,
           spoken: 'the word ' + w,
           fallback: PL.isWord(w) ? 'Uses the page’s voice' : 'Uses the device’s voice',
-          tip: PL.isWord(w) && !PL.isRealWord(w) && w.indexOf('o') === 1 ? 'Made-up word. Say o like the "ah" in dot.' : '',
+          tip: PL.isWord(w) && !PL.isRealWord(w) && PL.split(w)[1] === 'o' ? 'Made-up word. Say o like the "ah" in dot.' : '',
           maxMs: 4000,
           compact: true
         }));
@@ -1244,8 +1520,10 @@
           msg.className = 'form-msg form-msg--error';
           return;
         }
+        var split = result.split === 'letters' ? PL.splitLetters : PL.split;
         var steps = result.words.slice(1).map(function (w, i) {
-          return positionName(PL.changedIndex(result.words[i], w), w.length);
+          var tiles = split(w);
+          return positionName(PL.changedIndex(split(result.words[i]), tiles), tiles.length);
         });
         msg.textContent = 'Saved "' + name + '". Changes: ' + steps.join(', ') + '.';
         msg.className = 'form-msg form-msg--ok';
@@ -1260,6 +1538,7 @@
 
     function renderPanel() {
       rows = {};
+      renderTiles();
       renderRetention();
       renderStorage();
       renderSoundRows();
@@ -1270,6 +1549,7 @@
     function wire() {
       wireGate();
       wireForm();
+      wireTiles();
       $('deleteAllBtn').addEventListener('click', function () {
         var n = Voice.count();
         if (!n) return;
