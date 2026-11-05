@@ -38,12 +38,14 @@ downloads Whisper (about 1 GB) and wav2vec2-espeak (about 1.3 GB).
 
 ### Why phonemes, not spelling
 
-Words, keywords and letter sounds are made from exact phoneme strings (`phonemes.py`), never from
-spelling:
+Words, keywords and letter sounds are made from exact phoneme strings, never from spelling:
 
-- Each letter in the set maps to one sound: a /æ/, i /ɪ/, o /ɑ/, t /t/, d /d/, c /k/, g /ɡ/, n /n/.
+- A word is made of tiles, and each tile says one sound (`labs/letter-chaining/js/data.js`): a /æ/,
+  o /ɑ/, c /k/, g /ɡ/, sh /ʃ/, th /θ/, x /ks/, qu /kw/, ai, ay and a_e /eɪ/, ee and ea /i/, igh and
+  i_e /aɪ/, u_e /ju/, oo /u/, ow and ou /aʊ/, oi and oy /ɔɪ/, ar /ɑɹ/, or /ɔɹ/, er, ir and ur /ɝ/.
   So "cit" is always /kɪt/ (never "sit"), "gic" is /ɡɪk/ (never "jick"), and "dog" has the same
-  vowel as "dot".
+  vowel as "dot". A word's Kokoro string is its tiles' sounds with the stress mark before the vowel
+  tile: "ship" is `ʃˈɪp`, "cake" `kˈAk`.
 - Sentences go through Kokoro's dictionary, with the lesson word forced to the same phonemes as its
   word clip, and "on" forced to the "ah" of dot. A word the dictionary doesn't know stops the build
   instead of being guessed. "ton" is the made-up word "tahn" and has no sentence.
@@ -53,6 +55,13 @@ spelling:
   - Stops are cut from a word: the release of a word ending in the sound, or for /t k/ the burst and
     breath before voicing at the start of a word, and for /d g/ the burst up to the first voicing
     pulse. They are set 8 dB below the same voice's vowel sounds, so they aren't lost or harsh.
+  - /g/ is the exception: a bare burst (about 40 ms) sounded like /b/ or /d/, and both recognizers
+    missed it. It is cut from the start of "gut" with 65 ms of the vowel after voicing starts
+    (`trace_ms` in `phonemes.py`), which carries the back-of-the-mouth cue. The owner picked 65 ms by
+    ear from 50 to 80 ms; longer starts to sound like "guh."
+  - Long and other vowels (ai, oo, ow, ...) are said whole, as words. /ow/ is pinned to one take the
+    owner picked by ear (`WHOLE_PICKED` in `phonemes.py`): the first pick passed both recognizers
+    but sounded wrong.
   - Vowels and /n/ come from the steadiest part of the sound inside a word (sometimes said slower),
     lengthened with Praat's PSOLA into a short version (380 ms for vowels, 320 ms for /n/, plus a
     little silence at each end) and a held 700 ms version (not used by the lab yet), with a gentle
@@ -60,6 +69,30 @@ spelling:
   - Praat's PSOLA gives slightly different audio each time, so letter sounds (and the stops, whose
     level follows the vowels) never come out byte for byte the same twice. Words, keywords and
     sentences do.
+
+### Letter sounds for the full tile set
+
+The first eight sounds (a i o t d c g n) are made as above and kept as they are. The rest of the
+tile set needs sounds Kokoro won't say alone either. Two things shape how they're made:
+
+- Kokoro's own timing runs late, and slow speeds mostly add silence: a final v, z or l is 80-150 ms
+  at any speed. So sounds are found in the audio itself, from words said at 0.5-1.0x speed.
+- On their own, hissing sounds (f, th, h, v, z) are heard as nothing by both recognizers, so for
+  those the recognizers only rank takes and the acoustic checks decide.
+
+| Sounds | How | Checked for |
+| --- | --- | --- |
+| e, u | as a, i, o (u from "tub", "cut" and "up": after h and p the formant tracker slips on this voice) | as a, i, o |
+| m, ng | as n | as n |
+| p, b | as t and d | as t and d |
+| s, sh, f, th | the steady hiss of a word-final sound (unvoiced, strong high frequencies), 340 ms; lengthened by joining copies of the hiss if shorter. s and sh sit 5 dB below the vowel sounds, f and th 9 dB | voicing (a buzz or an "uh"), s too low or sh too high in pitch, length |
+| h | the breath before the vowel starts, 12 dB below the vowels | voicing, length |
+| v, l, r | the steady part (v after the vowel, l at the end of "ul", r from "er"), held to 320 ms with PSOLA | voicing, dropouts, sounding mechanical, a stretch over 2.5x |
+| z | from the start of "zip" (Kokoro says a final z without voicing), lengthened by joining copies, since PSOLA smears the hiss into a hum | as v |
+| ch, j | like a stop, with a longer release (ch up to 190 ms), 5 dB below the vowels. j keeps 50 ms of the vowel of "job" (`trace_ms`), as /g/ does: with the release alone, both recognizers heard /ch/ | as t and d |
+| qu, x, nk | cut out of a word: qu from the k burst to where the vowel takes over ("quiz"), x from the k burst to the end of the s ("fox"), nk from the ng hum to the end of the k ("junk") | length, an "uh" after, both recognizers |
+| w, y | from where voicing starts to where the vowel takes over (F2 halfway to the vowel's), not stretched, so there is very little vowel | voicing, length, both recognizers |
+| ai ee oa igh u_e oo ow oi ar or er | said on their own like a word ("A", "E", "oh", "eye", "you", "ooh", "ow", "oy", "are", "or", "er") and checked like a word | as words |
 
 ### Checks
 
@@ -76,8 +109,23 @@ the one with no hard problems, then the fewest phoneme problems, then the best s
   /d/ or /g/ has a long gap before voicing (sounds like /t/ or /k/) or a loud hum before it; a first
   /n/ is faint; a final /t/ or /k/ release is faint, or a voiced "uh" follows it.
 
-Recognizers have known biases on this audio, so their scores mostly rank takes; they only raise a
-problem when both agree. Sentences are checked only at their edges. Clips with any problem are
+**Both recognizers must be happy** (`qa.happiness`, `add_happiness`). Each one must prefer exactly the
+target over any one sound swapped or dropped, and both together must not hear an extra sound before or
+after it (an "uh" after a stop, the "y" of "you" before oo, an "l" left from the word a sound was cut
+from). ZIPA alone hears an extra sound around almost any lone sound, so an extra sound only counts when
+both hear one. A few habits of each recognizer on this voice don't count (`qa.ACCEPT`): ZIPA writes
+/ʌ/ and /ɑ/ as "a", both hear /ʌ/ as /ɑ/, wav2vec2 almost never writes /æ/, and an r after a vowel is
+often folded into it. Takes both recognizers are happy with always rank first. When no take is clean,
+words get a third round with other random seeds, long vowels are also said other ways
+(`phonemes.WHOLE_MORE`: held with "ː", or started with a catch "ʔ" so oo can't start with a "y"),
+and letter sounds have more source words, each with three seeds (`phonemes.MORE_SOURCES`). /d/ and /b/
+may also keep the start of the vowel, as /g/ does, if that is what the recognizers hear as /d/ or /b/.
+
+Recognizers have known biases on this audio, so their scores also rank takes; the other phoneme
+problems above are only raised when both agree. Vowels are only compared where both are reliable: /ɪ/, /ɑ/, and the long
+vowels, vowel pairs and r-vowels (/ɛ/, /ʌ/ and /i/ are checked by their formants instead). Words with
+the full tile set are said alone three ways first; the slower, faster and carrier takes are tried
+only when none of those three is clean. Sentences are checked only at their edges. Clips with any problem are
 marked `check` in `manifest.json`, with the reasons. Each voice's manifest also lists which vowel
 comparisons its references could not support. A person still listens to every clip before it ships.
 
@@ -93,20 +141,32 @@ python letter_chains.py --out /tmp/voice-pack \
   --zipa path/to/zipa-small-crctc-500k --w2v2 path/to/wav2vec2-lv-60-espeak-cv-ft
 ```
 
-Content comes straight from `labs/letter-chaining/js/data.js`, so new words and sentences are picked
-up automatically; letter sounds and keywords are listed in `phonemes.py`.
+Content comes straight from the lab (`labs/letter-chaining/tools/content.js` reads `js/data.js` and
+`js/words.js`), so new words and sentences are picked up automatically; how each letter sound is
+made, and each keyword's phonemes, are in `phonemes.py`.
+
+- `--new-only` skips every clip the lab already ships, so a new word list only makes the new clips.
+- `--names ship,fish` makes just those clips. Runs into the same `--out` folder add to its manifest.
 
 Output for each voice: `words/`, `keywords/`, `sentences/` (same names as the lab's `assets/audio/`),
 `sounds/<letter>.wav` and `sounds/<letter>-long.wav`, and `manifest.json`. Every take that was
 tried is kept under `takes/` for comparison.
 
+Each clip is saved twice: a WAV master and the MP3 the lab ships, letter sounds at 128 kbps and
+everything else at 96 (`MP3_KBPS`). At 64 kbps, which Monster Math uses, stops picked up a smear just
+before their burst: the c, t and ch sounds, and the first sound of about 1 in 10 words like "keep".
+To ship a take from `takes/` instead, convert it with `engine.to_mp3(wav, mp3, kbps)`, which also
+checks the bitrate and length.
+
 ### Shipping a voice
 
-The lab ships `af_heart` ("Heart"). To update it, copy the voice's `words/`, `keywords/` and
-`sentences/` WAVs over the files in `labs/letter-chaining/assets/audio/`, and its
-`sounds/<letter>.wav` files (not the `-long` ones, which the page doesn't use yet) into
-`assets/audio/sounds/`. Then run `node tools/build-audio.js` from the lab's folder. Listen to every
-clip marked `check` in `manifest.json` first.
+The lab ships `af_heart` ("Heart") as MP3. The WAV masters stay out of git, so keep them somewhere
+safe: letter sounds never come out the same twice. To update the lab, copy the voice's `words/`,
+`keywords/` and `sentences/` MP3s over the files in `labs/letter-chaining/assets/audio/`, and its
+`sounds/<name>.mp3` files into `assets/audio/sounds/`. Delete clips for words no longer in the list.
+Then run `node tools/build-audio.js` from the lab's folder. `labs/letter-chaining/test/audio.test.js`
+checks that every clip is there, as MP3, at the right bitrate. Listen to every clip marked `check`
+in `manifest.json` first.
 
 ## Monster Math
 

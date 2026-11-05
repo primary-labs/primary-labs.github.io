@@ -38,8 +38,11 @@ def pad(x, sec=0.5):
 # ---------------------------------------------------------------- recognizers
 
 VOWEL_POOL = ['æ', 'ɛ', 'ɪ', 'i', 'ʌ', 'ɑ', 'ɔ', 'o', 'e', 'ə', 'ʊ', 'u', 'a']
-CONS_POOL = ['t', 'd', 'k', 'ɡ', 'p', 'b', 'n', 'm', 'ŋ', 's', 'z', 'dʒ', 'tʃ', 'ʔ', 'ɾ', 'θ', 'ð', 'h', 'l', 'j']
-VOWELS = set(VOWEL_POOL) | {'oʊ', 'eɪ', 'aɪ', 'aʊ', 'ɔɪ'}
+CONS_POOL = ['t', 'd', 'k', 'ɡ', 'p', 'b', 'n', 'm', 'ŋ', 's', 'z', 'dʒ', 'tʃ', 'ʔ', 'ɾ', 'θ', 'ð', 'h', 'l', 'j',
+             'f', 'v', 'ʃ', 'ʒ', 'ɹ', 'w']
+# Long vowels, vowel pairs and r-vowels (Letter Chains' full tile set) are compared with each other too.
+LONG_VOWELS = ['eɪ', 'aɪ', 'oʊ', 'aʊ', 'ɔɪ', 'ɑɹ', 'ɔɹ', 'ɝ', 'i', 'u']
+VOWELS = set(VOWEL_POOL) | set(LONG_VOWELS)
 STOPS = {'t', 'd', 'k', 'ɡ', 'p', 'b'}
 
 
@@ -90,10 +93,16 @@ class _CTC:
         s_t, tv = self.best_variant(lp, target)
         per = []
         for k, ph in enumerate(target):
-            pool = VOWEL_POOL if ph in VOWELS else CONS_POOL
+            pool = (VOWEL_POOL + LONG_VOWELS if ph in LONG_VOWELS else VOWEL_POOL) if ph in VOWELS else CONS_POOL
             eq = set(self.equiv.get(ph, [ph]))
-            alts = [(self.seq_logp(lp, tv[:k] + [c] + tv[k + 1:]), c)
-                    for c in pool if c not in eq and self.has(c)]
+            alts = []
+            for c in dict.fromkeys(pool):
+                if c in eq:
+                    continue
+                # a competitor is written the way this recognizer writes it (wav2vec2 has /ɑːɹ/, not /ɑɹ/)
+                form = c if self.has(c) else next((o for o in self.equiv.get(c, []) if self.has(o) and o not in eq), None)
+                if form:
+                    alts.append((self.seq_logp(lp, tv[:k] + [form] + tv[k + 1:]), c))
             alts.append((self.seq_logp(lp, tv[:k] + tv[k + 1:]), 'nothing'))
             b = max(alts)
             per.append({'phone': ph, 'margin': round(s_t - b[0], 2), 'competitor': b[1]})
@@ -106,7 +115,12 @@ class Zipa(_CTC):
     """ZIPA-CR small (MIT code, CC BY 4.0 weights), ONNX on CPU."""
     name = 'zipa'
     equiv = {'æ': ['æ', 'æː'], 'ɪ': ['ɪ', 'ɪː'], 'ɑ': ['ɑ', 'ɑː', 'ɒ'], 't': ['t', 'tʰ'], 'k': ['k', 'kʰ'],
-             'u': ['u', 'uː'], 'oʊ': ['oʊ', 'o', 'oː']}
+             'u': ['u', 'uː'], 'oʊ': ['oʊ', 'o', 'oː'],
+             # added with the full tile set
+             'p': ['p', 'pʰ'], 'i': ['i', 'iː'], 'ɛ': ['ɛ', 'ɛː'], 'eɪ': ['eɪ', 'e', 'eː'], 'aɪ': ['aɪ', 'aj'],
+             'aʊ': ['aʊ', 'aw'], 'ɔɪ': ['ɔɪ', 'oɪ', 'ɔj'], 'ɹ': ['ɹ', 'ɻ'],
+             'ɑɹ': ['ɑɹ', 'ɑːɹ', 'ɑ˞', 'ɑɻ'], 'ɔɹ': ['ɔɹ', 'ɔːɹ', 'oɹ', 'oːɹ', 'ɔ˞', 'ɔɻ'],
+             'ɝ': ['ɜ˞', 'ɜɹ', 'əɹ', 'ɜː˞', 'ɹ̩', 'ɻ']}
 
     def __init__(self, model_dir):
         import onnxruntime as ort
@@ -143,7 +157,10 @@ class W2V2(_CTC):
     """facebook/wav2vec2-lv-60-espeak-cv-ft (Apache-2.0), limited to English phones."""
     name = 'w2v2'
     equiv = {'æ': ['æ'], 'ɪ': ['ɪ'], 'ɑ': ['ɑː', 'ɑ', 'ɒ'], 'i': ['iː', 'i'], 'u': ['uː'], 'ɔ': ['ɔː', 'ɔ'],
-             'e': ['eɪ'], 'o': ['oʊ'], 'a': ['aɪ']}
+             'e': ['eɪ'], 'o': ['oʊ'], 'a': ['aɪ'],
+             # added with the full tile set (space = two symbols)
+             'oʊ': ['oʊ', 'oː'], 'ɑɹ': ['ɑːɹ', 'ɑː ɹ', 'ɑ ɹ'], 'ɔɹ': ['ɔːɹ', 'oːɹ', 'ɔː ɹ', 'ɔ ɹ'],
+             'ɝ': ['ɜː', 'ɚ', 'ɜ']}
     ENGLISH = ('p b t d k ɡ f v θ ð s z ʃ ʒ h tʃ dʒ m n ŋ l ɹ j w ɾ ʔ ɫ iː ɪ eɪ ɛ æ ɑː ɑ ɒ ɔ ɔː oʊ ʊ uː ʌ ə ɚ '
                'ɜː aɪ aʊ ɔɪ ᵻ i ɐ ɑːɹ ɔːɹ ɛɹ ɪɹ ʊɹ oːɹ əl n̩ l̩ aɪə aɪɚ eə ɜ oː').split()
 
@@ -162,7 +179,7 @@ class W2V2(_CTC):
         self.mask = mask
 
     def tokens(self, phone):
-        return [self.vocab[phone]]
+        return [self.vocab[p] for p in phone.split(' ')]
 
     def logprobs(self, x16):
         import torch
@@ -178,6 +195,44 @@ class W2V2(_CTC):
                 out.append(self.inv[i])
             prev = i
         return ' '.join(out)
+
+
+# Known habits of each recognizer on this voice, not mistakes in the audio: ZIPA writes /ʌ/ and /ɑ/ as
+# "a", both hear /ʌ/ as /ɑ/, wav2vec2 almost never writes /æ/, and an r after a vowel is often folded
+# into the vowel. A phone whose best competitor is listed here doesn't count against a clip.
+ACCEPT = {
+    'zipa': {'ʌ': {'a', 'ɑ', 'ɐ', 'ə'}, 'ɑ': {'a'}},
+    'w2v2': {'ʌ': {'ɑ', 'ɐ', 'ə'}, 'æ': {'nothing'}},
+}
+
+
+def happiness(r, x16, target):
+    """How sure one recognizer is that a clip says exactly `target`: the smallest margin of the target
+    over (a) any one phone swapped or dropped and (b) one extra phone before or after it. Below 0 means
+    the recognizer prefers some other sound, or hears an extra one ("uh" after a stop, "y" before oo)."""
+    s = r.score(x16, target)
+    ok = ACCEPT.get(r.name, {})
+    for k, q in enumerate(s['per_phone']):
+        after_vowel = k > 0 and target[k - 1] in VOWELS
+        if q['competitor'] in ok.get(q['phone'], ()) or (q['phone'] == 'ɹ' and after_vowel and q['competitor'] == 'nothing'):
+            q['accepted'] = True
+    counted = [q for q in s['per_phone'] if not q.get('accepted')]
+    s['min_margin'] = min([q['margin'] for q in counted] + [10.0])
+    lp = r.logprobs(pad(x16))
+    s_t, tv = r.best_variant(lp, target)
+    ins = []
+    for p in VOWEL_POOL + CONS_POOL:
+        if not r.has(p):
+            continue
+        ins.append((r.seq_logp(lp, [p] + tv), p + '+'))
+        ins.append((r.seq_logp(lp, tv + [p]), '+' + p))
+    best = max(ins)
+    ins_margin = round(s_t - best[0], 2)
+    sub = s['min_margin']
+    worst = min(counted or s['per_phone'], key=lambda q: q['margin'])
+    why = ('%s for /%s/' % (worst['competitor'], worst['phone'])) if sub <= ins_margin else 'extra %s' % best[1].strip('+')
+    return {'heard': s['heard'], 'sub': sub, 'ins': ins_margin, 'margin': min(sub, ins_margin), 'why': why,
+            'worst_phone': worst['phone'], 'worst_competitor': worst['competitor'], 'extra': best[1]}
 
 
 def heard_matches(heard, target):

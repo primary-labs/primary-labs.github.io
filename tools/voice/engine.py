@@ -4,6 +4,7 @@
       .g2p(text)                         text -> phoneme string; an unknown word raises
       .synth(ps, voice, seed, speed)     phoneme string -> (audio, frames per token)
     trim, normalize, padded, write       cut silence, level, pad, save as 16-bit WAV
+    to_mp3, mp3_kbps                     WAV file -> constant-bitrate MP3, checked; read an MP3's bitrate
 
 Audio is 24 kHz mono float32. normalize() aims for -20 LUFS (BS.1770 with 100 ms blocks) with peaks
 below -1 dBFS, so clips from every lab play at the same level.
@@ -167,6 +168,43 @@ def write(path, x):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     sf.write(path, padded(x), SR, subtype='PCM_16')
     return sha(path)
+
+
+# libsndfile's constant-bitrate settings for 24 kHz mono. Its mapping can change between versions,
+# so to_mp3 reads the bitrate back from the file.
+MP3_LEVELS = {64: 0.6, 96: 0.4, 128: 0.2}
+
+
+def to_mp3(wav, mp3, kbps):
+    """Saves the WAV file as a constant-bitrate MP3. Returns the MP3's SHA-256."""
+    if kbps not in MP3_LEVELS:
+        raise ValueError('kbps must be one of %s' % sorted(MP3_LEVELS))
+    x, sr = sf.read(wav, dtype='float32')
+    os.makedirs(os.path.dirname(mp3) or '.', exist_ok=True)
+    sf.write(mp3, x, sr, format='MP3', bitrate_mode='CONSTANT', compression_level=MP3_LEVELS[kbps])
+    got = mp3_kbps(mp3)
+    if got != kbps:
+        raise RuntimeError('%s came out at %s kbps, not %d: update MP3_LEVELS' % (mp3, got, kbps))
+    if len(sf.read(mp3)[0]) != len(x):
+        raise RuntimeError('%s decodes to a different length than %s' % (mp3, wav))
+    return sha(mp3)
+
+
+def mp3_kbps(path):
+    """Bitrate of the first MPEG audio frame (MPEG-1, 2 or 2.5, Layer III), or None."""
+    with open(path, 'rb') as f:
+        b = f.read()
+    i = 10 + ((b[6] << 21) | (b[7] << 14) | (b[8] << 7) | b[9]) if b[:3] == b'ID3' else 0
+    for i in range(i, len(b) - 3):
+        if b[i] != 0xFF or b[i + 1] & 0xE0 != 0xE0:
+            continue
+        ver, layer, index = (b[i + 1] >> 3) & 3, (b[i + 1] >> 1) & 3, b[i + 2] >> 4
+        if ver == 1 or layer != 1 or index in (0, 15):
+            continue
+        table = ((0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320) if ver == 3 else
+                 (0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160))
+        return table[index]
+    return None
 
 
 def version(p):
