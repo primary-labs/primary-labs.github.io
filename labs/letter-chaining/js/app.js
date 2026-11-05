@@ -343,8 +343,8 @@
       var note = $('soundsNote');
       note.hidden = missing === 0;
       note.textContent = missing === ids.length
-        ? 'The sounds use the page\'s computer-generated voice. Teachers can record their own in Teacher Corner.'
-        : 'Cards without "Teacher voice" use the page\'s computer-generated voice. Teachers can record them in Teacher Corner.';
+        ? 'The sounds use the page\'s computer voice. Teachers can record their own in Teacher Corner.'
+        : 'Cards without "Teacher voice" use the page\'s computer voice. Teachers can record them in Teacher Corner.';
     }
   };
 

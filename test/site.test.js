@@ -62,6 +62,12 @@ function resolve(from, ref) {
   return path.relative(ROOT, path.resolve(ROOT, path.dirname(from), clean));
 }
 
+// Tool and tech names mean nothing to teachers and kids, so page copy never uses them. "AI" is matched
+// in capitals only, because "ai" is a letter tile.
+const JARGON = [/kokoro|open[- ]source|whisper|wav2vec|hugging ?face|voice model|\btts\b|kbps|\bmp3\b/i, /\bAI\b/];
+const jsStrings = (src) => src.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '')
+  .match(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"/g) || [];
+
 function tags(html, name) { return [...html.matchAll(new RegExp(`<${name}\\b[^>]*>`, 'g'))].map((m) => m[0]); }
 function attr(tag, name) { const m = tag.match(new RegExp(`\\s${name}="([^"]*)"`)); return m ? m[1] : null; }
 
@@ -153,6 +159,18 @@ for (const [name, page] of PAGES) {
       const def = css.match(tokenDef);
       assert.equal(def, null, `${f} defines shared token ${def && def[0]}`);
       assert.deepEqual(sharedRestyles(css), [], `${f} restyles a shared class`);
+    }
+  });
+
+  // ---------------------------------------------------------------- copy
+
+  test(`${name}: page text names no tools or tech`, () => {
+    const copy = [[page, html.replace(/<!--[\s\S]*?-->/g, '')], ...js.map(([f, src]) => [f, jsStrings(src).join('\n')])];
+    for (const [f, text] of copy) {
+      for (const re of JARGON) {
+        const m = text.match(re);
+        assert.equal(m, null, `${f}: "${m && text.slice(Math.max(0, m.index - 40), m.index + 40).trim()}"`);
+      }
     }
   });
 }

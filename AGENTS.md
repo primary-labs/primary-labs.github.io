@@ -55,7 +55,9 @@ These protect student and teacher privacy. Don't loosen them.
 ## Content and copy
 
 - Always write the name as **Primary Labs** in user-facing text.
-- Copy is short and plain, written for teachers and young kids.
+- Copy is short and plain, written for teachers and young kids. It never names tools or tech
+  (Kokoro, AI, open-source, file formats): the default voice is "a computer voice". Those details
+  belong in the READMEs.
 - Each lab names the NYS Next Generation standards it covers (README, page metadata, home page entry).
 - Follow `DESIGN.md`: Andika font, cream light theme, shared header and buttons, yellow = look here,
   green = correct, drawn icons on controls.
@@ -94,7 +96,8 @@ cd tools/voice && .venv/bin/python -m unittest   # voice tool tests (needs its v
   can't reliably read Blobs back from IndexedDB. Swapping clips for new MP3s at the same bitrate
   doesn't need this check.
 - `test/site.test.js` checks every page's security policy, inline code, outside URLs and linked files,
-  and that page CSS leaves the shared tokens and classes alone. It doesn't check motion, tap targets,
+  that page CSS leaves the shared tokens and classes alone, and that page text names no tools (Kokoro,
+  AI, open-source, MP3...). It doesn't check motion, tap targets,
   colors or layout. Each lab's README says what its own tests cover; test the activities by hand in
   the browser.
 - After a visual change, look at each page at 390px and desktop widths and Tab through it.
