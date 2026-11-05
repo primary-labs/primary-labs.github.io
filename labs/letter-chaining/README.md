@@ -111,6 +111,6 @@ Every tile's sound, word, keyword picture (apple, igloo…), and sentence plays 
 **The clips are computer-generated**, with the "Heart" voice of Kokoro-82M, an open-source voice model (Apache-2.0, no limits on the audio it makes). They were made ahead of time from exact phonemes, so "cit" is always /kĭt/ and every short o is the "ah" in dot. No AI runs in the browser. When a teacher records a letter sound or word, their recording plays instead. `../../tools/voice/README.md` explains how the clips were made and checked, and `assets/audio/README.md` lists every clip.
 
 - Clips are MP3: letter sounds at 128 kbps, everything else at 96. Letter sounds get more bits because their bursts and hisses smear at lower bitrates.
-- Remake the clips: see `../../tools/voice/README.md`, then copy the chosen voice's MP3s in and run `node tools/build-audio.js`.
+- Remake the clips with the `voice` skill (`.claude/skills/voice/SKILL.md` at the repo root): the owner picks every letter sound by ear on the run's listen page, then the MP3s are copied in and `node tools/build-audio.js` is run.
 - Replace one clip: save an `.mp3` at the same bitrate with the same name, then run `node tools/build-audio.js`.
 - Each clip ships as a small `.js` file next to the audio, because the security policy (`connect-src 'none'`) stops scripts from downloading files. Only the `.js` files need to be deployed.
