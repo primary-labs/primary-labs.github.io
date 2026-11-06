@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Static page: scripts and styles come only from this site, and connect-src 'none' means no
+       script can send data anywhere. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>Sound Boxes | Primary Labs</title>
+  <meta name="description" content="Kindergarten and grade 1 reading: blend sounds into words and break words into sounds, with letters. Short a, i, o, u and e. Aligned to NYS Next Generation ELA KRF2d, KRF3a, KRF3b and 1RF3c.">
+  <meta name="theme-color" content="#FFF8EC">
+  <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../../assets/fonts/andika-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../assets/primary-labs.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/teachers.css">
+</head>
+<body>
+  <a class="skip-link" href="#game">Skip to the activity</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="../../" aria-label="Primary Labs home">
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect width="48" height="48" rx="13" fill="#1F2A44"/><path d="M18.5 10 H29.5" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/><path d="M21 11 V20 L13 33.5 Q11 38 16 38 H32 Q37 38 35 33.5 L27 20 V11" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linejoin="round"/><path d="M16.6 29 H31.4 L33.6 33 Q34.6 35.5 31.8 35.5 H16.2 Q13.4 35.5 14.4 33 Z" fill="#FFC93C"/><circle cx="21" cy="24.5" r="2.2" fill="#E4572E"/><circle cx="27" cy="22" r="1.7" fill="#5AA9FF"/></svg>
+        <span class="brand-name">Primary Labs</span>
+      </a>
+      <h1 class="lab-title">Sound Boxes</h1>
+      <div class="header-tools">
+        <!-- The level list opens over the page, so it doesn't push the activity down. -->
+        <div class="levels-menu">
+          <button type="button" class="btn btn--tool levels-btn" id="levelsBtn" aria-expanded="false" aria-controls="levelsPanel"><span class="btn-icon" data-icon="boxes"></span><span class="levels-btn-label">Levels</span></button>
+          <div class="levels-panel" id="levelsPanel" role="region" aria-labelledby="levels-title" hidden>
+            <h2 class="levels-title" id="levels-title">Levels</h2>
+            <nav class="level-list" id="levelList" aria-label="Pick a level"></nav>
+          </div>
+        </div>
+        <button type="button" class="icon-btn" id="sfx" aria-pressed="true" aria-label="Sound effects"></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="main">
+    <section class="panel game" id="game" tabindex="-1" aria-label="Sound Boxes">
+      <div class="game-top">
+        <div class="segmented mode-switch" role="group" aria-label="Activity">
+          <button type="button" data-mode="blend" aria-pressed="true">Blend</button>
+          <button type="button" data-mode="segment" aria-pressed="false">Segment</button>
+        </div>
+        <div class="prompt-row">
+          <p class="prompt" id="prompt"></p>
+          <button type="button" class="icon-btn" id="promptBtn" aria-label="Hear the directions"></button>
+        </div>
+      </div>
+
+      <div class="listen-row">
+        <!-- Tapping the picture does what the yellow button does, so the keyboard and screen readers
+             use that button and skip the picture. -->
+        <div class="card-pic" id="card" aria-hidden="true"></div>
+        <button type="button" class="btn btn--listen" id="hearBtn"><span class="btn-icon" data-icon="speaker"></span><span id="hearLabel">Hear the sounds</span></button>
+      </div>
+
+      <ol class="boxes" id="boxes" aria-label="Sound boxes"></ol>
+
+      <div class="tray" id="tray" role="group"></div>
+
+      <div class="next-row is-waiting" id="nextRow">
+        <button type="button" class="btn btn--primary btn--big" id="nextBtn"><span id="nextLabel">Next word</span> <span class="btn-icon" data-icon="next"></span></button>
+      </div>
+
+      <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- Teacher notes stay closed, so children see one quiet line instead of a page of text. -->
+    <details class="teachers">
+      <summary class="teachers-toggle">
+        <svg class="teachers-chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2 class="teachers-title">For teachers</h2>
+        <span class="teachers-hint">How to use it, standards and tips</span>
+      </summary>
+      <div class="card teachers-body">
+        <p class="card-lede">Practice for after a lesson on blending and segmenting, not a replacement for it. Each word has
+          three sounds and three letters, like <em>cat</em> or <em>sun</em>. There are two activities.</p>
+
+        <h3>How to use it</h3>
+        <ol class="steps">
+          <li><strong>Blend.</strong> The student hears the word's sounds one at a time, and each box lights up as its sound plays. They tap a box to hear its sound again, say the word, then tap its picture. The two other pictures are one sound away (for <em>cat</em>: <em>hat</em> and <em>can</em>), so every sound matters. A right picture says the word and shows its letters.</li>
+          <li><strong>Segment, say it.</strong> The student hears a word and sees its picture. They say each sound out loud as they tap or slide a counter into each box. Each box plays its sound as the counter lands, so they can check themselves.</li>
+          <li><strong>Segment, spell it.</strong> They put letters in the boxes. A wrong letter says its own sound and stays where it is, and the box says the sound it needs.</li>
+        </ol>
+
+        <h3>Standards</h3>
+        <p class="card-lede">NYS Next Generation English Language Arts Learning Standards, Kindergarten and Grade 1.</p>
+        <div class="standards">
+          <div class="standard">
+            <p class="standard-code">KRF2d</p>
+            <blockquote>Blend and segment individual sounds (phonemes) in spoken one-syllable words.</blockquote>
+            <p><strong>Where:</strong> Blend joins three sounds into a word. Segment's counters break a word into its three sounds.</p>
+          </div>
+          <div class="standard">
+            <p class="standard-code">KRF3a</p>
+            <blockquote>Demonstrate one-to-one letter-sound correspondence by producing the primary sound or most frequent sound for each consonant.</blockquote>
+            <p><strong>Where:</strong> In Segment's letter step, students match each consonant sound to its letter, and every letter says its sound when it is tapped.</p>
+          </div>
+          <div class="standard">
+            <p class="standard-code">KRF3b</p>
+            <blockquote>Decode short vowel sounds with common spellings.</blockquote>
+            <p><strong>Where:</strong> Every word has a short vowel, and each level practices one vowel. The letter tray always has a second vowel to choose from.</p>
+          </div>
+          <div class="standard">
+            <p class="standard-code">1RF3c</p>
+            <blockquote>Decode regularly spelled one-syllable words.</blockquote>
+            <p><strong>Where:</strong> Students link each sound of a regularly spelled word to its letter, then read the finished word in the boxes.</p>
+          </div>
+        </div>
+        <p class="fine">Grade 1 students also count, blend and segment sounds as in 1RF2a, but these words have no consonant blends (like <em>st</em> or <em>fl</em>), so the lab doesn't cover that standard.</p>
+
+        <h3>Tips</h3>
+        <ul class="tips">
+          <li>Ask students to say every sound out loud. Saying the sounds is the practice; the taps only check it.</li>
+          <li>Pick a level with the <em>Levels</em> button at the top. Short a, i, o, u and e each practice one vowel. <em>Mixed</em> reviews all five.</li>
+          <li>A level always has the same words in the same order. To share one, open it and copy the page address. It ends with the level's name, like <code>#short-a</code>.</li>
+          <li>Tap a box at any time to hear its sound. Tap the picture, or the yellow button, to hear the word or the sounds again.</li>
+          <li>There is no timer and no score. A wrong answer just plays the sounds again.</li>
+          <li>The bell at the top turns sound effects off. The voice stays on.</li>
+          <li>The voice is a computer voice. Nothing students do is sent anywhere.</li>
+        </ul>
+      </div>
+    </details>
+  </main>
+
+  <footer class="site-footer">
+    <p class="footer-brand">Primary Labs</p>
+    <p>Sound Boxes: blend sounds into words, and break words into sounds</p>
+    <p class="fine">No accounts, no tracking.</p>
+  </footer>
+
+  <script src="js/words.js"></script>
+  <script src="js/rounds.js"></script>
+  <script src="js/phrases.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="assets/audio/index.js"></script>
+  <script src="js/art-living.js"></script>
+  <script src="js/art-things.js"></script>
+  <script src="js/art.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/boxes.js"></script>
+  <script src="js/drag.js"></script>
+  <script src="js/blend.js"></script>
+  <script src="js/segment.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

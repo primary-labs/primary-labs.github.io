@@ -27,6 +27,8 @@ LABS = {
     'letter-chains': ('letter-chaining', [(g, g, g, g) for g in ('sounds', 'keywords', 'words', 'sentences')]),
     'monster-math': ('monster-math', [('phrases', 'wav', 'phrases', 'phrases')]),
     'story-puzzles': ('story-puzzles', [('phrases', 'wav', 'phrases', 'phrases')]),
+    # Only the directions: Sound Boxes' letter sounds and words are Letter Chains' clips.
+    'sound-boxes': ('sound-boxes', [('phrases', 'wav', 'phrases', 'phrases')]),
 }
 
 

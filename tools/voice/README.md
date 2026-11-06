@@ -16,6 +16,7 @@ letter_chains.py       Letter Chains: letter sounds, words, keywords, sentences;
 phonemes.py            Letter Chains' exact phonemes, and the takes picked by ear (PICKED)
 monster_math.py        Monster Math: every spoken line
 story_puzzles.py       Story Puzzles: every spoken line, through Monster Math's pipeline
+sound_boxes.py         Sound Boxes: the spoken directions, through Monster Math's pipeline
 save_masters.py        zips the WAV masters of the clips a lab ships
 spectrogram.py         spectrograms of clips as one PNG, to look at a sound (numpy and soundfile only)
 test_*.py              tests: python -m unittest
@@ -28,7 +29,7 @@ The steps for making, checking and shipping clips are in the `voice` skill
 ## Where things go
 
 - **Runs** go to `~/Documents/Primary Labs audio/runs/<lab>/` (`letter-chains`, `monster-math`,
-  `story-puzzles`), the same folder every time, so `--only` finds the last full run. They live outside the
+  `story-puzzles`, `sound-boxes`), the same folder every time, so `--only` finds the last full run. They live outside the
   repo, so `git clean` and worktrees can't lose them. `--out` overrides the folder.
 - **Masters**: after clips ship, `python save_masters.py <lab>` zips the WAV master of every shipped clip
   and the run's manifest into `~/Documents/Primary Labs audio/masters/<lab>-<date>.zip`. Letter sounds
@@ -404,6 +405,31 @@ Copy `phrases/*.mp3` into `labs/story-puzzles/assets/audio/phrases/`, then run
 `node tools/build-audio.js --from "$HOME/Documents/Primary Labs audio/runs/story-puzzles/af_heart/manifest.json"`
 from the lab's folder, and `python save_masters.py story-puzzles` here. `--from` records the text each
 clip was made from, and the lab's tests fail if a line changes after its clip was made.
+
+## Sound Boxes
+
+Sound Boxes plays letter sounds, words and a few spoken directions. Only the directions are made here.
+The letter sounds and words are Letter Chains' clips, copied unchanged by
+`labs/sound-boxes/tools/copy-clips.js`: the owner picked every letter sound by ear, and a remade one
+can't ship without that pick, so Sound Boxes never makes its own. The lab's tests check that each copy
+is byte-identical to its Letter Chains source, so after Letter Chains remakes a clip, run `copy-clips.js`
+and `build-audio.js` in the lab again.
+
+`sound_boxes.py` runs Monster Math's pipeline and review (above) on the lines from
+`labs/sound-boxes/tools/list-phrases.js`: "Which picture?", "Listen again.", "Tap a box for each
+sound." and "Put the letters in the boxes." They are ordinary words, so the dictionary is used as is.
+Its only short o word, "box"/"boxes", already comes out with the "ah" of dot (`bˈɑks`), so nothing is
+forced; a new direction with a short o word needs the same check in `manifest.json`.
+
+```sh
+python sound_boxes.py                    # every direction
+python sound_boxes.py --only which       # some; the rest are kept
+```
+
+The first run (2026-11-05) made all four with none left to check, each on its first take. Copy
+`phrases/*.mp3` into `labs/sound-boxes/assets/audio/phrases/`, then run
+`node tools/build-audio.js --from "$HOME/Documents/Primary Labs audio/runs/sound-boxes/af_heart/manifest.json"`
+from the lab's folder, and `python save_masters.py sound-boxes` here.
 
 ## Telling schools
 

@@ -160,6 +160,15 @@ Every lab ships MP3 only: letter sounds at 128 kbps, everything else at 96. The 
    (an absolute path). This records the text each clip was made from; the tests fail without it.
    If lines changed, also `node tools/list-phrases.js --readme`.
 
+**Sound Boxes**
+1. Directions only: copy `$R/sound-boxes/af_heart/phrases/<id>.mp3` into
+   `labs/sound-boxes/assets/audio/phrases/`.
+2. `cd labs/sound-boxes && node tools/build-audio.js --from "$HOME/Documents/Primary Labs audio/runs/sound-boxes/af_heart/manifest.json"`;
+   if directions changed, also `node tools/list-phrases.js --readme`.
+3. Its letter sounds and words are Letter Chains' clips. After shipping new ones in Letter Chains, run
+   `node tools/copy-clips.js` and `node tools/build-audio.js` in `labs/sound-boxes/` too (its tests fail
+   until the copies match). Never make letter sounds for Sound Boxes.
+
 **Then, for every lab**
 - `cd tools/voice && python save_masters.py <lab>` zips the shipped WAV masters and the run record into
   `~/Documents/Primary Labs audio/masters/`.

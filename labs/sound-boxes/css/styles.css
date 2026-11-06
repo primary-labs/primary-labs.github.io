@@ -1,0 +1,154 @@
+/* Primary Labs · Sound Boxes
+   One column, the same every round: the directions, the picture card and the hear button, the
+   three sound boxes, the tray (pictures, counters or letters), then the Next button. Nothing moves
+   unless the child taps something. Yellow lights the box whose sound is playing and marks the box
+   to fill next; green means right. Red and blue are vowel and consonant letters.
+   Loads after ../../assets/primary-labs.css, which has the fonts, colors, header, buttons, and the
+   panel. This file is only what is special to Sound Boxes; the teacher notes are in teachers.css. */
+
+:root {
+  /* Phones: sizes come from the width, three boxes across, and the page scrolls. */
+  --box: clamp(80px, calc((100vw - 104px) / 3), 150px);
+  --card: calc(var(--box) * 0.9);
+  --choice: var(--box);
+  --tile: clamp(48px, calc((100vw - 120px) / 6), 84px);
+  --counter: calc(var(--tile) * 0.8);
+  /* The screen's height without the browser's bars, for fitting the activity on tablets and boards.
+     svh doesn't change as a toolbar slides away, so nothing resizes while scrolling. */
+  --screen: 100vh;
+}
+@supports (height: 100svh) { :root { --screen: 100svh; } }
+
+/* Tablets and boards: everything fits on one screen. About 380px goes to the header, the
+   directions, the Next button and the space between; the card, the boxes and the tray share
+   the rest. */
+@media (min-width: 721px) {
+  :root {
+    --box: clamp(88px, calc((var(--screen) - 380px) / 2.9), 150px);
+    --tile: clamp(60px, calc(var(--box) * 0.62), 84px);
+  }
+}
+
+button { -webkit-tap-highlight-color: transparent; }
+
+/* ---------- header ---------- */
+.header-tools { display: flex; gap: 8px; align-items: center; margin-left: auto; position: relative; }
+.levels-btn { padding-inline: 14px 18px; }
+@media (max-width: 480px) {
+  /* Small phones: the icon alone, so the header stays on one row. The word is still read out. */
+  .levels-btn { padding-inline: 12px; }
+  .levels-btn-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+.levels-panel {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 30; width: min(420px, calc(100vw - 32px));
+  display: grid; gap: 10px; padding: 18px 20px 20px;
+  background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.levels-panel[hidden] { display: none; }
+.levels-title { font-size: 20px; }
+.level-list { display: grid; gap: 8px; }
+.level-pill { justify-content: space-between; padding: 6px 16px; text-align: left; }
+.level-words { font-size: 15px; color: var(--ink-soft); }
+.level-pill[aria-pressed="true"] .level-words { color: #FFFFFF; }
+
+/* ---------- page ---------- */
+.wrap {
+  width: 100%; max-width: var(--page); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) 40px max(16px, env(safe-area-inset-left, 0px));
+}
+
+/* ---------- activity ---------- */
+.game { display: grid; justify-items: center; gap: 16px; scroll-margin-top: 80px; } /* clear of the sticky header */
+.game:focus { outline: none; }
+@media (min-width: 721px) { .game { padding-block: 20px; gap: 14px; } }
+.game-top {
+  justify-self: stretch; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px;
+}
+.prompt-row { display: flex; align-items: center; gap: 12px; }
+.prompt { font-size: clamp(19px, 2.2vw, 23px); font-weight: 700; text-wrap: balance; }
+
+/* The picture card and the hear button. In Blend the card stays an empty outline until the
+   right picture is picked. */
+.listen-row { display: flex; align-items: center; justify-content: center; gap: clamp(14px, 3vw, 28px); }
+.card-pic {
+  width: var(--card); height: var(--card); padding: 6px; display: grid; place-items: center;
+  background: var(--surface); border: 3px solid var(--line); border-radius: var(--radius); cursor: pointer;
+}
+.card-pic.is-empty { background: var(--bg); border-style: dashed; }
+.pic-svg { width: 100%; height: 100%; display: block; }
+@media (hover: hover) { .card-pic:hover { border-color: var(--ink); } }
+
+/* ---------- the sound boxes ---------- */
+.boxes { list-style: none; margin: 0; padding: 0; display: flex; justify-content: center; gap: clamp(8px, 1.6vw, 14px); }
+.box {
+  position: relative; display: grid; place-items: center; width: var(--box); height: var(--box); padding: 0;
+  background: var(--surface); border: 4px solid var(--ink-soft); border-radius: var(--radius-sm);
+  font-weight: 700; color: #FFFFFF; transition: background .15s, border-color .15s;
+}
+.box.is-next { border-style: dashed; border-color: var(--yellow-dark); background: var(--yellow-soft); }
+/* One "look here" at a time: the dashed edge rests while a sound plays (js/boxes.js). */
+.boxes.is-playing .box.is-next:not(.is-lit) { border-color: var(--ink-soft); background: var(--surface); }
+.box.is-lit { border-style: solid; border-color: var(--yellow-dark); background: var(--yellow); }
+.box.has-letter.is-vowel { background: var(--vowel); border-color: var(--vowel-dark); }
+.box.has-letter.is-consonant { background: var(--consonant); border-color: var(--consonant-dark); }
+.boxes.is-done .box { box-shadow: 0 0 0 4px var(--surface), 0 0 0 8px var(--green); }
+/* A lit letter keeps its color; its yellow ring takes priority over the completed word's green. */
+.box.has-letter.is-lit { box-shadow: 0 0 0 5px var(--yellow); }
+.box-letter { font-size: calc(var(--box) * 0.62); line-height: 1; padding-bottom: 0.08em; }
+.box-letter.pop { animation: pop .3s ease-out; }
+.counter-dot {
+  display: block; width: var(--counter); height: var(--counter); border-radius: 50%;
+  background: var(--ink); box-shadow: inset 0 -5px 0 rgba(0, 0, 0, 0.35);
+}
+
+/* ---------- the tray: pictures, counters or letters ---------- */
+/* Pieces stay where they are: a used counter or letter leaves its outline behind. */
+.tray { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(10px, 2vw, 18px); min-height: var(--tile); }
+
+.choice {
+  width: var(--choice); height: var(--choice); padding: 6px; background: var(--surface);
+  border: 3px solid var(--line); border-radius: var(--radius); box-shadow: 0 4px 0 var(--line);
+  transition: transform .08s ease, opacity .2s ease;
+}
+@media (hover: hover) { .choice:hover:not(.is-wrong):not(.is-right) { border-color: var(--ink); } }
+.choice:active:not(.is-wrong) { transform: translateY(2px); box-shadow: 0 2px 0 var(--line); }
+.choice.is-right { border: 5px solid var(--green); background: var(--green-soft); box-shadow: 0 4px 0 var(--green); }
+.choice.is-wrong { opacity: .3; filter: grayscale(1); cursor: default; }
+.choice.shake, .tile.shake { animation: shake .4s; }
+
+.counter {
+  display: grid; place-items: center; width: var(--tile); height: var(--tile); padding: 0;
+  background: var(--bg); border: 2px solid var(--line); border-radius: 50%;
+}
+.tile {
+  display: grid; place-items: center; width: var(--tile); height: var(--tile); padding: 0 0 0.08em;
+  border: 0; border-radius: 16px; color: #FFFFFF; font-weight: 700; font-size: calc(var(--tile) * 0.62); line-height: 1;
+  transition: transform .08s ease;
+}
+.tile--vowel { background: var(--vowel); box-shadow: inset 0 -6px 0 var(--vowel-dark); }
+.tile--consonant { background: var(--consonant); box-shadow: inset 0 -6px 0 var(--consonant-dark); }
+.tile:active, .counter:active { transform: translateY(2px); }
+@media (min-width: 721px) {
+  /* Counters and letters can be dragged here (js/drag.js), so a touch moves them instead of scrolling. */
+  .counter, .tile { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; cursor: grab; }
+}
+.is-dragging { position: relative; z-index: 5; cursor: grabbing; filter: drop-shadow(0 10px 8px rgba(31, 42, 68, .22)); }
+.tray-gap { display: block; width: var(--tile); height: var(--tile); border: 2px dashed var(--line); }
+.tray-gap--counter { border-radius: 50%; }
+.tray-gap--tile { border-radius: 16px; }
+
+/* ---------- Next and feedback ---------- */
+/* The Next button's row always takes its space, so nothing above it moves when it appears. */
+.next-row { min-height: 66px; display: grid; place-items: center; }
+.next-row.is-waiting .btn--primary { visibility: hidden; }
+.next-row:not(.is-waiting) .btn--primary { animation: rise .3s ease-out; }
+.feedback { min-height: 1.6em; text-align: center; font-size: 20px; font-weight: 700; }
+.feedback--yay { color: var(--green); }
+
+/* ---------- small screens ---------- */
+@media (max-width: 720px) {
+  .game { scroll-margin-top: 0; }
+  .game-top { flex-direction: column; align-items: stretch; }
+  .mode-switch { justify-content: center; }
+  .prompt-row { justify-content: space-between; }
+}

@@ -1,0 +1,25 @@
+/* Primary Labs · Sound Boxes: the teacher notes under the activity, as in Story Puzzles.
+   Closed, they're one small grey line, so children don't land in a page of text. */
+.teachers-toggle {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; min-height: 48px; padding: 6px 8px;
+  list-style: none; cursor: pointer; color: var(--ink-soft); border-radius: var(--radius-sm);
+}
+.teachers-toggle::-webkit-details-marker { display: none; }
+@media (hover: hover) { .teachers-toggle:hover { color: var(--ink); } }
+.teachers-chev { width: 20px; height: 20px; flex: none; transition: transform .2s; }
+.teachers[open] .teachers-chev { transform: rotate(90deg); }
+.teachers-title { font-size: 18px; }
+.teachers-hint { font-size: 15px; }
+.teachers-body { display: grid; gap: 12px; margin-top: 8px; }
+.teachers h3 { margin: 12px 0 0; }
+.card-lede { color: var(--ink-soft); max-width: 70ch; }
+.steps, .tips { margin: 0; padding-left: 1.4em; display: grid; gap: 6px; max-width: 75ch; }
+.standards { display: grid; gap: 14px; }
+@media (min-width: 820px) { .standards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.standard { border: 2px solid var(--line); border-radius: var(--radius-sm); padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+.standard-code {
+  justify-self: start; padding: 2px 12px; border-radius: 999px; background: var(--ink); color: #FFFFFF;
+  font-weight: 700; font-size: 16px;
+}
+.standard blockquote { margin: 0; padding-left: 12px; border-left: 4px solid var(--line); font-style: italic; }
+.teachers code { font-size: .9em; background: var(--bg-deep); padding: 1px 6px; border-radius: 6px; }

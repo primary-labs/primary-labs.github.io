@@ -17,6 +17,7 @@ assets/                    shared: primary-labs.css (design system), fonts, favi
 labs/letter-chaining/      Letter Chains: grade 1 phonics (window.PL)
 labs/monster-math/         Monster Math: K–1 add/subtract within 10 (window.MM)
 labs/story-puzzles/        Story Puzzles: grade 1 decodable stories with picture pieces (window.SP)
+labs/sound-boxes/          Sound Boxes: K–1 blending and segmenting with sound boxes (window.SB)
 tools/voice/               makes every lab's default voice clips with Kokoro (Python, build time only)
 test/                      site-wide checks for every page, and the home page's lab list
 DESIGN.md                  the design language
@@ -47,7 +48,7 @@ These protect student and teacher privacy. Don't loosen them.
 ## Code style
 
 - Plain browser JavaScript: one IIFE per file with `'use strict'`, attached to the lab's global
-  namespace (`window.PL`, `window.MM`, `window.SP`). Scripts load in order through `<script src>` tags. No ES
+  namespace (`window.PL`, `window.MM`, `window.SP`, `window.SB`). Scripts load in order through `<script src>` tags. No ES
   modules, bundlers, or dependencies.
 - Node is used only for tools and tests (`node:test`, no npm packages).
 - Match the existing file's style. Keep comments short and plain.
@@ -72,7 +73,8 @@ The labs teach phonics, so audio must carry exactly the right sounds:
   a last resort.
 - Default clips for every lab are made with Kokoro-82M ("Heart" voice, `af_heart`) and checked
   automatically: Letter Chains from exact phoneme strings, Monster Math and Story Puzzles from the
-  dictionary with word, sound and glitch checks (Story Puzzles forces short o to "ah"). A person listens only to the clips the checks can't clear,
+  dictionary with word, sound and glitch checks (Story Puzzles forces short o to "ah"). Sound Boxes
+  makes only its directions that way and copies its letter sounds and words from Letter Chains. A person listens only to the clips the checks can't clear,
   and the owner hears every letter sound: a sound they haven't flagged is assumed right, and a remade one
   ships only with their pick. See `tools/voice/README.md`.
 - To make, remake, check or ship clips, use the `voice` skill (`.claude/skills/voice/SKILL.md`). Every lab ships
@@ -87,7 +89,7 @@ names (`pip install ...`, `uv pip install ...`), not `.venv/bin/pip`.
 
 ```sh
 python3 -m http.server 8000        # from the repo root, then open http://localhost:8000
-node --test test/ labs/monster-math/test/ labs/story-puzzles/test/ labs/letter-chaining/test/
+node --test test/ labs/monster-math/test/ labs/story-puzzles/test/ labs/letter-chaining/test/ labs/sound-boxes/test/
 cd tools/voice && .venv/bin/python -m unittest   # voice tool tests (needs its venv)
 ```
 
