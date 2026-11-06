@@ -192,7 +192,9 @@ MP3) and prints the lines to add to `PICKED` in `phonemes.py`, so later runs mak
 kind for words, keywords and whole vowels (`'words/pin': 'dot2'`), the source for a cut letter sound
 (`'sounds/d': 'dˈʌt~50'`). Picked and kept clips leave the page; the rest stay. Smoothed sounds (vowels,
 n, m, ng, v, z, l, r) come out slightly different on each run; the masters keep the exact audio. /g/ is
-pinned in its spec instead, and /j/ in `PICKED`.
+pinned in its spec instead, and /j/ in `PICKED`. The letter sounds the owner heard and didn't flag are
+listed in `KEPT`, and stay as shipped until the owner says otherwise. A test checks that every letter
+sound is in `PICKED` or `KEPT` (or is /g/), so a new sound needs the owner's ear before it ships.
 
 `--review` checks the clips the lab ships now with the same checks, without making anything: what
 both recognizers hear and every problem, printed and saved as `review.json`. For real words and

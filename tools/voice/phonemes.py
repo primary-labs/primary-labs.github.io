@@ -355,3 +355,9 @@ PICKED = {
     # Round 4: no ng was right until it kept the vowel before it (100 ms of "sing"), 200 ms long.
     'sounds/ng': 'sˈɪŋ@0.45#3~100=200',
 }
+# Letter sounds the owner heard on the live site on 2026-11-04 and didn't flag: they stay as shipped
+# until the owner says otherwise. A sound picked later moves from here to PICKED.
+KEPT = {
+    'b', 'c', 'd', 'l', 'm', 'n', 'p', 'qu', 's', 't', 'x', 'y', 'ch', 'nk',
+    'ai', 'ee', 'oa', 'igh', 'u_e', 'oo', 'ar', 'or', 'er',
+}

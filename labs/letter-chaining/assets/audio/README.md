@@ -6,8 +6,8 @@ on every computer and browser. When a teacher records a letter sound or word in 
 
 **These files are computer-generated** with the "Heart" voice of Kokoro-82M, an open-source voice
 model, by the site's `tools/voice/letter_chains.py`. Words, keywords and letter sounds were made from exact phonemes,
-and every take was checked automatically for phoneme errors. The best word and keyword takes were kept; the owner picked
-each letter sound by ear. `tools/voice/README.md` explains the method.
+and every take was checked automatically for phoneme errors. The best word and keyword takes were kept. The owner listened
+to every letter sound, and the ones that sounded wrong were remade and picked by ear. `tools/voice/README.md` explains the method.
 
 Heart's short i and short e are close together. Measured across all the words they stay apart, but before n, g,
 l and ng a few pairs come out close (pin and pen, sing and seng), and new takes don't change that. If a clip

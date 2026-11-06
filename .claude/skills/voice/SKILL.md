@@ -87,7 +87,8 @@ cd tools/voice && source .venv/bin/activate     # then plain `python`; or call .
 4. The owner copies back the box at the bottom. Pass all of it, as is:
    `python letter_chains.py --pick "<the box>"`. Picked takes are put in the run folder as the exact
    file the owner heard (WAV and MP3), and it prints the lines to add to `PICKED` in `phonemes.py` so later
-   runs make the same take. Add them, each with a short comment saying why.
+   runs make the same take. Add them, each with a short comment saying why, and take a picked sound
+   out of `KEPT` (the sounds the owner heard and didn't flag).
 5. **"None sound right"**: those four takes are recorded as turned down and never shown again, so
    `--listen` (or the next run) offers the next four. Do that once at most. If the owner turns down a
    second round, or the page says no takes are left, the way the sound is made is wrong. Look at it with

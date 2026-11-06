@@ -73,7 +73,8 @@ The labs teach phonics, so audio must carry exactly the right sounds:
 - Default clips for every lab are made with Kokoro-82M ("Heart" voice, `af_heart`) and checked
   automatically: Letter Chains from exact phoneme strings, Monster Math and Story Puzzles from the
   dictionary with word, sound and glitch checks (Story Puzzles forces short o to "ah"). A person listens only to the clips the checks can't clear,
-  and the owner picks every letter sound by ear. See `tools/voice/README.md`.
+  and the owner hears every letter sound: a sound they haven't flagged is assumed right, and a remade one
+  ships only with their pick. See `tools/voice/README.md`.
 - To make, remake, check or ship clips, use the `voice` skill (`.claude/skills/voice/SKILL.md`). Every lab ships
   MP3: letter sounds at 128 kbps, everything else at 96.
 - Don't use macOS voices (Samantha etc.) for shipped audio: Apple allows them for personal use only.

@@ -115,6 +115,14 @@ class Picks(unittest.TestCase):
                 base = kind.replace('_trim', '')
                 self.assertTrue(base in kinds or any(base.startswith(a) and base[len(a):] in kinds for a in alts), cid)
 
+    def test_the_owner_has_heard_every_letter_sound(self):
+        sounds = [s['id'] for s in P.SOUNDS] + list(P.WHOLE_VOWELS)
+        picked = {cid.split('/')[1] for cid in P.PICKED if cid.startswith('sounds/')}
+        self.assertFalse(picked & P.KEPT)
+        self.assertFalse(P.KEPT - set(sounds))
+        # /g/ is pinned in its spec instead
+        self.assertEqual(sorted(set(sounds) - picked - P.KEPT), ['g'])
+
     def test_picked_spec_makes_one_source(self):
         d = next(s for s in P.SOUNDS if s['id'] == 'd')
         p = LC.picked_spec(d, 'dˈʌt~50')
